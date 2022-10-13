@@ -62,6 +62,7 @@ class BaseHead(nn.Layer):
     def forward(self, x):
         """Define how the head is going to run.
         """
+        print('notimplemented')
         raise NotImplemented
 
     def loss(self, scores, labels, valid_mode=False, if_top5=True, **kwargs):

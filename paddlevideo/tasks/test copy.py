@@ -88,9 +88,8 @@ logger = get_logger("paddlevideo")
 
 
 import pickle
-import os
 import numpy as np
-feature_save_dir = '/mnt/storage/gait-0/xin/dev/PaddleVideo/temp'
+feature_save_dir = '/home/zhangyuxuan07/PaddleSports/SoccerData/output/features'
 
 @paddle.no_grad()
 def test_model(cfg, weights, parallel=True):
@@ -160,7 +159,7 @@ def test_model(cfg, weights, parallel=True):
                 'video_feature': np_features
             }
 
-            feature_path = os.path.join(cfg.features_dir, f'{batch_id}.pkl')
+            feature_path =feature_save_dir + '/' + str(batch_id)+".pkl"
             feat_pkl_str = pickle.dumps(video_features,
                                 protocol=pickle.HIGHEST_PROTOCOL)
             with open(feature_path, 'wb') as fout:

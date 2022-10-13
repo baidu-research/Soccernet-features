@@ -26,7 +26,7 @@ from .decode_image import ImageDecoder
 from .decode_sampler import DecodeSampler
 from .mix import Cutmix, Mixup, VideoMix
 from .multimodal import FeaturePadding, RandomCap, RandomMask, Tokenize
-from .sample import Sampler, SamplerPkl
+from .sample import Sampler, SamplerPkl, EventSampler
 from .sample_ava import *
 from .segmentation import MultiNorm, MultiRestrictSize
 from .skeleton_pipeline import AutoPadding, Iden, SkeletonNorm
@@ -39,7 +39,7 @@ from .segmentation_pipline import SegmentationSampler
 
 __all__ = [
     'ImageDecoder', 'RandomMask', 'UniformCrop', 'SkeletonNorm', 'Tokenize',
-    'Sampler', 'FeatureDecoder', 'DecodeSampler', 'TenCrop', 'Compose',
+    'Sampler', 'EventSampler', 'FeatureDecoder', 'DecodeSampler', 'TenCrop', 'Compose',
     'AutoPadding', 'Normalization', 'Mixup', 'Image2Array', 'Scale',
     'GroupResize', 'VideoDecoder', 'FrameDecoder', 'PackOutput',
     'ActionFeatureDecoder', 'GetVideoLabel', 'Cutmix', 'CenterCrop',

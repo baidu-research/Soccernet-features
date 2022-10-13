@@ -33,6 +33,11 @@ def build_record(cfg):
         record_list.append(("hit_at_one", AverageMeter("hit_at_one", '.5f')))
         record_list.append(("perr", AverageMeter("perr", '.5f')))
         record_list.append(("gap", AverageMeter("gap", '.5f')))
+    elif 'RecognizerTransformerDenseAnchors' in cfg.framework:
+        record_list.append(("loss_class", AverageMeter("loss_class", '.5f')))
+        record_list.append(("loss_event_times", AverageMeter("loss_event_times", '.5f')))
+        record_list.append(("top1", AverageMeter("top1", '.5f')))
+        record_list.append(("top5", AverageMeter("top5", '.5f')))
     elif 'Recognizer' in cfg.framework:
         record_list.append(("top1", AverageMeter("top1", '.5f')))
         record_list.append(("top5", AverageMeter("top5", '.5f')))

@@ -15,6 +15,7 @@
 from .base import BaseWeightedLoss
 from .bmn_loss import BMNLoss
 from .cross_entropy_loss import CrossEntropyLoss
+from .dense_anchor_loss import DenseAnchorLoss
 from .depth_loss import ADDSLoss
 from .transnetv2_loss import TransNetV2Loss
 from .actbert_loss import ActBertLoss
@@ -22,6 +23,6 @@ from .asrf_loss import ASRFLoss
 from .distillation_loss import DistillationCELoss, DistillationDMLLoss
 
 __all__ = [
-    'CrossEntropyLoss', 'BMNLoss', 'TransNetV2Loss', 'ActBertLoss', 'ADDSLoss',
+    'CrossEntropyLoss', 'DenseAnchorLoss', 'BMNLoss', 'TransNetV2Loss', 'ActBertLoss', 'ADDSLoss',
     'BaseWeightedLoss', 'ASRFLoss', 'DistillationCELoss', 'DistillationDMLLoss'
 ]

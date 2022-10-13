@@ -35,6 +35,15 @@ except ImportError:
     from io import BytesIO
 
 
+
+def clip_video_start_end(start_secs, end_secs, length_secs):
+    sample_length_secs = end_secs - start_secs
+    if start_secs < 0:
+        return (0, sample_length_secs)
+    if end_secs > length_secs:
+        return (length_secs - sample_length_secs, length_secs)
+    return (start_secs, end_secs)
+
 @PIPELINES.register()
 class Sampler(object):
     """
@@ -106,13 +115,15 @@ class Sampler(object):
                         imgbuf = np_frames[i]
                         imgs.append(Image.fromarray(imgbuf, mode='RGB'))
                 else:
-                    if frames_idx.ndim != 1:
-                        frames_idx = np.squeeze(frames_idx)
+                    # print('frames_idx', frames_idx)
+                    # if frames_idx.ndim != 1:
+                    #     frames_idx = np.squeeze(frames_idx)
+                    frames_idx = np.array(frames_idx)
                     frame_dict = {
                         idx: container[idx].asnumpy()
                         for idx in np.unique(frames_idx)
                     }
-                    imgs = [frame_dict[idx] for idx in frames_idx]
+                    imgs = [container[idx].asnumpy() for idx in frames_idx]
             elif results['backend'] == 'pyav':
                 imgs = []
                 frames = np.array(results['frames'])
@@ -127,6 +138,12 @@ class Sampler(object):
         else:
             raise NotImplementedError
         results['imgs'] = imgs
+
+        # print('results.keys()', results.keys())
+        # for key in ['filename', 'labels', 'frames', 'frames_len']:
+        #     print('results', key, results[key])
+        # print('len(imgs)', len(imgs))
+
         return results
 
     def _get_train_clips(self, num_frames):
@@ -302,6 +319,168 @@ class Sampler(object):
 
             return self._get(frames_idx, results)
 
+
+@PIPELINES.register()
+class EventSampler(object):
+    """
+    Sample frames id.
+    NOTE: Use PIL to read image here, has diff with CV2
+    Args:
+        num_seg(int): number of segments.
+        seg_len(int): number of sampled frames in each segment.
+        valid_mode(bool): True or False.
+        select_left: Whether to select the frame to the left in the middle when the sampling interval is even in the test mode.
+    Returns:
+        frames_idx: the index of sampled #frames.
+    """
+    def __init__(self,
+                 num_seg,
+                 seg_len,
+                 frame_interval=None,
+                 valid_mode=False,
+                 select_left=False,
+                 dense_sample=False,
+                #  linspace_sample=False,
+                 use_pil=True,
+                 sample_length_secs = 1.0):
+        self.num_seg = num_seg
+        self.seg_len = seg_len
+        self.frame_interval = frame_interval
+        self.valid_mode = valid_mode
+        self.select_left = select_left
+        self.dense_sample = dense_sample
+        # self.linspace_sample = linspace_sample
+        self.use_pil = use_pil
+        self.sample_length_secs = sample_length_secs
+
+    def _get(self, frames_idx, results):
+        data_format = results['format']
+
+        if data_format == "frame":
+            frame_dir = results['frame_dir']
+            imgs = []
+            for idx in frames_idx:
+                img = Image.open(
+                    os.path.join(frame_dir,
+                                 results['suffix'].format(idx))).convert('RGB')
+                imgs.append(img)
+
+        elif data_format == "MRI":
+            frame_dir = results['frame_dir']
+            imgs = []
+            MRI = sitk.GetArrayFromImage(sitk.ReadImage(frame_dir))
+            for idx in frames_idx:
+                item = MRI[idx]
+                item = cv2.resize(item, (224, 224))
+                imgs.append(item)
+
+        elif data_format == "video":
+            if results['backend'] == 'cv2':
+                frames = np.array(results['frames'])
+                imgs = []
+                for idx in frames_idx:
+                    imgbuf = frames[idx]
+                    img = Image.fromarray(imgbuf, mode='RGB')
+                    imgs.append(img)
+            elif results['backend'] == 'decord':
+                container = results['frames']
+                if self.use_pil:
+                    frames_select = container.get_batch(frames_idx)
+                    # dearray_to_img
+                    np_frames = frames_select.asnumpy()
+                    imgs = []
+                    for i in range(np_frames.shape[0]):
+                        imgbuf = np_frames[i]
+                        imgs.append(Image.fromarray(imgbuf, mode='RGB'))
+                else:
+                    # print('frames_idx', frames_idx)
+                    # if frames_idx.ndim != 1:
+                    #     frames_idx = np.squeeze(frames_idx)
+                    frames_idx = np.array(frames_idx)
+                    frame_dict = {
+                        idx: container[idx].asnumpy()
+                        for idx in np.unique(frames_idx)
+                    }
+                    imgs = [container[idx].asnumpy() for idx in frames_idx]
+            elif results['backend'] == 'pyav':
+                imgs = []
+                frames = np.array(results['frames'])
+                for idx in frames_idx:
+                    if self.dense_sample:
+                        idx = idx - 1
+                    imgbuf = frames[idx]
+                    imgs.append(imgbuf)
+                imgs = np.stack(imgs)  # thwc
+            else:
+                raise NotImplementedError
+        else:
+            raise NotImplementedError
+        results['imgs'] = imgs
+
+        # print('results.keys()', results.keys())
+        # for key in ['filename', 'labels', 'frames', 'frames_len']:
+        #     print('results', key, results[key])
+        # print('len(imgs)', len(imgs))
+
+        return results
+
+    def __call__(self, results):
+        """
+        Args:
+            frames_len: length of frames.
+        return:
+            sampling id.
+        """
+        frames_len = int(results['frames_len'])
+        frames_idx = []
+
+        random_offset_thresh_away_from_event = 0.0
+        # This controls how much away from the boundary can the event be
+        random_offset =  np.random.uniform(
+            low = -self.sample_length_secs / 2 + random_offset_thresh_away_from_event, 
+            high = self.sample_length_secs / 2 - random_offset_thresh_away_from_event)
+
+        if self.valid_mode:
+            # we assume that events are randomly distributed across the clips
+            random_offset = 0
+
+        results['random_offset'] = random_offset
+        # this works for inference testing, since we wll set sample_length_secs to be the same as clip_lengths?
+        # or set event_time to be 0, to sample from the beginning?
+        start_secs = results['event_time'] - self.sample_length_secs / 2 + random_offset
+        end_secs = results['event_time'] + self.sample_length_secs / 2 + random_offset
+
+        results['start_secs_0'] = start_secs
+        results['end_secs_0'] = end_secs
+
+        start_secs_clipped, end_secs_clipped = clip_video_start_end(start_secs, end_secs, results['clip_length_secs'])
+
+        results['start_secs_clipped'] = start_secs_clipped
+        results['end_secs_clipped'] = end_secs_clipped
+
+        start_secs = start_secs_clipped
+        end_secs = end_secs_clipped
+
+        fps = frames_len / results['clip_length_secs']
+
+        start_idx = int(start_secs * fps + 0.5)
+        end_idx = int(end_secs * fps + 0.5)
+
+        results['start_idx'] = start_idx
+        results['end_idx'] = end_idx
+
+        results['start_secs'] = start_secs
+        results['end_secs'] = end_secs
+
+        frames_idx = np.linspace(start_idx, end_idx,
+                                    self.num_seg).astype(np.int64)
+
+        results['event_time_in_sampled_clip_fraction'] = (results['event_time'] - start_secs) / (end_secs - start_secs)
+
+        # print('results')
+        # print(results)
+
+        return self._get(frames_idx, results)
 
 @PIPELINES.register()
 class SamplerPkl(object):

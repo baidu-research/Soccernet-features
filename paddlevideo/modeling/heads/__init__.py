@@ -19,6 +19,7 @@ from .base import BaseHead
 from .bbox_head import BBoxHeadAVA
 from .cfbi_head import CollaborativeEnsemblerMS
 from .i3d_head import I3DHead
+from .i3d_anchor_head import I3DAnchorHead
 from .movinet_head import MoViNetHead
 from .ms_tcn_head import MSTCNHead
 from .pptimesformer_head import ppTimeSformerHead
@@ -42,7 +43,7 @@ from .token_shift_head import TokenShiftHead
 __all__ = [
     'BaseHead', 'TSNHead', 'TSMHead', 'ppTSMHead', 'ppTSNHead', 'SlowFastHead',
     'AttentionLstmHead', 'TimeSformerHead', 'STGCNHead', 'TransNetV2Head',
-    'I3DHead', 'SingleRoIExtractor3D', 'AVARoIHead', 'BBoxHeadAVA', 'AddsHead',
+    'I3DHead', 'I3DAnchorHead', 'SingleRoIExtractor3D', 'AVARoIHead', 'BBoxHeadAVA', 'AddsHead',
     'ppTimeSformerHead', 'CollaborativeEnsemblerMS', 'MSTCNHead', 'ASRFHead',
     'MoViNetHead', 'CTRGCNHead', 'TokenShiftHead', 'ActionAttentionLstmHead',
     'AGCN2sHead'

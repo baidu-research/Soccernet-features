@@ -16,7 +16,6 @@ from .recognizer2d import Recognizer2D
 from .recognizer3d import Recognizer3D
 from .recognizer_transformer import RecognizerTransformer
 from .recognizer_transformer_features_inference import RecognizerTransformerFeaturesInference
-from .recognizer_transformer_dense_anchors import RecognizerTransformerDenseAnchors
 
 from .recognizer_gcn import RecognizerGCN
 from .recognizerMRI import RecognizerMRI
@@ -27,7 +26,7 @@ from .recognizerDistillation import RecognizerDistillation
 
 __all__ = [
     'BaseRecognizer', 'Recognizer1D', 'Recognizer2D', 'Recognizer3D',
-    'RecognizerTransformer', 'RecognizerTransformerDenseAnchors', 'RecognizerGCN', 'RecognizerMRI', 'RecognizerTransformerFeaturesInference', 
+    'RecognizerTransformer', 'RecognizerGCN', 'RecognizerMRI', 'RecognizerTransformerFeaturesInference', 
     'Recognizer3DMRI', 'RecognizerTransformer_MRI', 'MoViNetRecognizerFrame',
     'RecognizerAction', 'RecognizerDistillation'
 ]
