@@ -463,8 +463,10 @@ class EventSampler(object):
 
         fps = frames_len / results['clip_length_secs']
 
-        start_idx = int(start_secs * fps + 0.5)
-        end_idx = int(end_secs * fps + 0.5)
+        start_idx = int(start_secs * fps) # only off by 1 frame, it's OK
+        end_idx = int(end_secs * fps)
+        if end_idx == frames_len:
+            end_idx = frames_len - 1
 
         results['start_idx'] = start_idx
         results['end_idx'] = end_idx

@@ -90,7 +90,6 @@ logger = get_logger("paddlevideo")
 import pickle
 import os
 import numpy as np
-feature_save_dir = '/mnt/storage/gait-0/xin/dev/PaddleVideo/temp'
 
 @paddle.no_grad()
 def test_model(cfg, weights, parallel=True):
@@ -148,22 +147,40 @@ def test_model(cfg, weights, parallel=True):
     if cfg.MODEL.framework == "FastRCNN":
         Metric.set_dataset_info(dataset.info, len(dataset))
 
+    accumulated_features = {}
     for batch_id, data in enumerate(data_loader):
         if cfg.model_name in [
                 'CFBI'
         ]:  # for VOS task, dataset for video and dataloader for frames in each video
             Metric.update(batch_id, data, model)
+        elif hasattr(cfg, 'features_dir'): # save feature mode test code
+            # saving cls score and event_times, the default for anchor head
+            if cfg.MODEL.HEAD in ['I3DAnchorHead'] and cfg.MODEL.HEAD.output_mode == 'cls_score_event_times':
+                # default cls_score and event_times
+                cls_score, event_times = model(data, mode='test')
+
+                if batch_id == 0:
+                    accumulated_features['cls_score'] = []
+                    accumulated_features['event_times'] = []
+
+                accumulated_features['cls_score'].append(np.array(cls_score, dtype = np.float32))
+                accumulated_features['event_times'].append(np.array(event_times, dtype = np.float32))
+
+                if batch_id == len(data_loader) - 1: #last one need to save
+                    cls_score_all = np.stack(accumulated_features['cls_score'])
+                    event_times = np.stack(accumulated_features['event_times'])
+                    save_dict = {'cls_score_all': cls_score_all, 'event_times': event_times}
+                    np.save(os.path.join(cfg.features_dir, 'features.npy'), save_dict)
+            else: # saving only features
+                outputs = model(data, mode='test')
+                np_features = np.array(outputs, dtype = np.float32)
+                accumulated_features.append(np_features)
+
+                if batch_id == len(data_loader) - 1: #last one need to save
+                    features = np.stack(accumulated_features)
+                    save_dict = {'features': features}
+                    np.save(os.path.join(cfg.features_dir, 'features.npy'), save_dict)
         else:
             outputs = model(data, mode='test')
-            np_features = np.array(outputs, dtype = np.float32)
-            video_features = {
-                'video_feature': np_features
-            }
-
-            feature_path = os.path.join(cfg.features_dir, f'{batch_id}.pkl')
-            feat_pkl_str = pickle.dumps(video_features,
-                                protocol=pickle.HIGHEST_PROTOCOL)
-            with open(feature_path, 'wb') as fout:
-                fout.write(feat_pkl_str)
-            # Metric.update(batch_id, data, outputs)
-    # Metric.accumulate()
+            Metric.update(batch_id, data, outputs)
+    Metric.accumulate()

@@ -42,7 +42,7 @@ def add_coordinates_embedding_to_imgs(results):
     return
 
 @DATASETS.register()
-class VideoDenseAnchorsDataset(BaseDataset):
+class VideoDenseAnchorsOneFileInferenceDataset(BaseDataset):
     """Video dataset for action recognition
        The dataset loads raw videos and apply specified transforms on them.
        The index file is a file with multiple lines, and each line indicates
@@ -58,26 +58,23 @@ class VideoDenseAnchorsDataset(BaseDataset):
            pipeline(XXX): A sequence of data transforms.
            **kwargs: Keyword arguments for ```BaseDataset```.
     """
-    def __init__(self, file_path, pipeline, num_retries=5, suffix='', **kwargs):
+    def __init__(self, file_path, pipeline, sample_length_secs = 5.0, num_retries=5, suffix='', **kwargs):
         self.num_retries = num_retries
         self.suffix = suffix
+        self.sample_length_secs = sample_length_secs
         super().__init__(file_path, pipeline, **kwargs)
 
     def load_file(self):
         """Load index file to get video information."""
         info = []
         with open(self.file_path, 'r') as fin:
-            for line in fin:
-                if len(line.strip()) == 0:
-                    continue
-                line_json = json.loads(line)
-
-                #TODO(hj): Required suffix format: may mp4/avi/wmv
-                # filename = filename + self.suffix
-                if self.data_prefix is not None:
-                    filename = line_json['filename']
-                    line_json['filename'] = osp.join(self.data_prefix, filename)
-                info.append(line_json)
+            file_data = json.load(fin)
+            length_secs = file_data['length_secs']
+            for i in range(length_secs - self.sample_length_secs):
+                inference_clip_data = copy.deepcopy(file_data)
+                inference_clip_data['start_secs'] = i
+                inference_clip_data['end_secs'] = i + self.sample_length_secs
+                info.append(inference_clip_data)
         return info
 
     def prepare_train(self, idx):

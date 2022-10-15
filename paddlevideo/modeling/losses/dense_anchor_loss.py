@@ -32,24 +32,23 @@ class DenseAnchorLoss(BaseWeightedLoss):
         Returns:
             loss (paddle.Tensor): The returned CrossEntropy loss.
         """
-        # two types of losses, cross_entropy, then l2
-
-        # cls_scores = predictions['class_scores']
-        # cls_labels = labels['class_labels']
-        # event_times = predictions['event_times']
-        # event_time_labels = labels['event_time_labels']
-
         loss_class = F.cross_entropy(cls_scores, cls_labels)
         # this has to be multiplied by class indices
         # how to pass in a weight coefficient
         # print('event_times', event_times)
         # print('event_time_labels', event_time_labels)
         cls_one_hot = F.one_hot(cls_labels, event_times.shape[1])
-        event_times_for_labeled_class = paddle.squeeze(paddle.sum(event_times * cls_one_hot, axis = 2), 1)
-        print('event_times_for_labeled_class', event_times_for_labeled_class)
-        print('event_time_labels', event_time_labels)
+        background_mask = paddle.ones_like(cls_one_hot)
+        background_mask[:, :, -1] = 0.0      
+        event_times_for_labeled_class = paddle.squeeze(paddle.sum(event_times * cls_one_hot * background_mask, axis = 2), 1)
+        # print('cls_one_hot', cls_one_hot)
+        # print('background_mask', background_mask)
+        # print('event_times_for_labeled_class', event_times_for_labeled_class)
+        # ddd
+        # print('event_time_labels', event_time_labels)
 
-        loss_event_times = F.mse_loss(event_times_for_labeled_class, event_time_labels) # try F.l1_loss?
+        # -1 to exclude the last class / background class
+        loss_event_times = F.mse_loss(event_times_for_labeled_class, event_time_labels)
         # missing a weight argument here, or even make two separate losses?
         loss_total = loss_class + event_time_loss_weight * loss_event_times
         loss = {

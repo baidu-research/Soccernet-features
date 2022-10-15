@@ -44,6 +44,7 @@ class I3DAnchorHead(BaseHead):
                  drop_ratio=0.5,
                  std=0.01,
                  event_time_loss_weight = 1.0,
+                 output_mode = None,
                  **kwargs):
 
         super().__init__(num_classes, in_channels, loss_cfg, **kwargs)
@@ -52,6 +53,7 @@ class I3DAnchorHead(BaseHead):
         self.drop_ratio = drop_ratio
         self.stdv = std
         self.event_time_loss_weight = event_time_loss_weight
+        self.output_mode = output_mode
         if self.drop_ratio != 0:
             self.dropout = nn.Dropout(p=self.drop_ratio)
         else:
@@ -66,8 +68,8 @@ class I3DAnchorHead(BaseHead):
         self.fc_event_times = nn.Linear(
             self.in_channels,
             self.num_classes,
-            weight_attr=ParamAttr(learning_rate=0.001),
-            bias_attr=ParamAttr(learning_rate=0.001),
+            # weight_attr=ParamAttr(learning_rate=0.001),
+            # bias_attr=ParamAttr(learning_rate=0.001),
         )
 
         if self.spatial_type == 'avg':
@@ -103,7 +105,11 @@ class I3DAnchorHead(BaseHead):
         cls_score = self.fc(x)
         event_times = F.sigmoid(self.fc_event_times(x)) # need to normalize this to be between 0 and 1
         # [N, num_classes]
-        return cls_score, event_times
+        if self.output_mode == 'features':
+            return x
+        # probability_time mode
+        else:
+            return cls_score, event_times
 
     # Override loss for our dual loss case here
     def loss(self, cls_score, class_labels, event_times, event_time_labels, valid_mode=False, if_top5=True, **kwargs):
