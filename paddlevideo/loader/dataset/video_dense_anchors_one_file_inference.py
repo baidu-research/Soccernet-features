@@ -70,7 +70,7 @@ class VideoDenseAnchorsOneFileInferenceDataset(BaseDataset):
         with open(self.file_path, 'r') as fin:
             file_data = json.load(fin)
             length_secs = file_data['length_secs']
-            for i in range(length_secs - self.sample_length_secs):
+            for i in range(int(length_secs - self.sample_length_secs)):
                 inference_clip_data = copy.deepcopy(file_data)
                 inference_clip_data['start_secs'] = i
                 inference_clip_data['end_secs'] = i + self.sample_length_secs
@@ -146,6 +146,4 @@ class VideoDenseAnchorsOneFileInferenceDataset(BaseDataset):
             add_coordinates_embedding_to_imgs(results)
 
             return {
-                'imgs': results['imgs'], 
-                'label': np.array([results['label']]),
-                'event_time_labels': np.array(results['event_time_in_sampled_clip_fraction'], dtype = np.float32)}
+                'imgs': results['imgs']}

@@ -60,16 +60,19 @@ class RecognizerTransformerDenseAnchors(BaseRecognizer):
 
     def test_step(self, data_batch):
         """Define how the model is going to infer, from input to output."""
-        imgs = data_batch[0]
-        num_views = imgs.shape[2] // self.runtime_cfg.test.num_seg
-        cls_score = []
-        for i in range(num_views):
-            view = imgs[:, :, i * self.runtime_cfg.test.num_seg:(i + 1) *
-                        self.runtime_cfg.test.num_seg]
-            cls_score.append(self.forward_net(view))
-        cls_score = self._average_view(cls_score,
-                                       self.runtime_cfg.test.avg_type)
-        return cls_score
+        # imgs = data_batch[0]
+        # num_views = imgs.shape[2] // self.runtime_cfg.test.num_seg
+        # cls_score = []
+        # for i in range(num_views):
+        #     view = imgs[:, :, i * self.runtime_cfg.test.num_seg:(i + 1) *
+        #                 self.runtime_cfg.test.num_seg]
+        #     cls_score.append(self.forward_net(view))
+        # cls_score = self._average_view(cls_score,
+        #                                self.runtime_cfg.test.avg_type)
+        
+        imgs = data_batch['imgs']
+        result = self.forward_net(imgs)
+        return result
 
     def infer_step(self, data_batch):
         """Define how the model is going to infer, from input to output."""

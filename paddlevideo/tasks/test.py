@@ -91,6 +91,9 @@ import pickle
 import os
 import numpy as np
 
+def is_save_inference_result_mode(cfg):
+    return hasattr(cfg, 'save_inference_results') and cfg.save_inference_results
+
 @paddle.no_grad()
 def test_model(cfg, weights, parallel=True):
     """Test model entry
@@ -153,9 +156,9 @@ def test_model(cfg, weights, parallel=True):
                 'CFBI'
         ]:  # for VOS task, dataset for video and dataloader for frames in each video
             Metric.update(batch_id, data, model)
-        elif hasattr(cfg, 'features_dir'): # save feature mode test code
+        elif is_save_inference_result_mode(cfg): # save feature mode test code
             # saving cls score and event_times, the default for anchor head
-            if cfg.MODEL.HEAD in ['I3DAnchorHead'] and cfg.MODEL.HEAD.output_mode == 'cls_score_event_times':
+            if cfg.MODEL.head.name in ['I3DAnchorHead'] and cfg.MODEL.head.output_mode in ['cls_score_event_times']:
                 # default cls_score and event_times
                 cls_score, event_times = model(data, mode='test')
 
@@ -168,19 +171,27 @@ def test_model(cfg, weights, parallel=True):
 
                 if batch_id == len(data_loader) - 1: #last one need to save
                     cls_score_all = np.stack(accumulated_features['cls_score'])
-                    event_times = np.stack(accumulated_features['event_times'])
-                    save_dict = {'cls_score_all': cls_score_all, 'event_times': event_times}
-                    np.save(os.path.join(cfg.features_dir, 'features.npy'), save_dict)
+                    event_times_all = np.stack(accumulated_features['event_times'])
+                    save_dict = {'cls_score_all': cls_score_all, 'event_times': event_times_all}
+                    features_file = os.path.join(cfg.inference_dir, 'features.npy')
+                    np.save(features_file, save_dict)
+                    print('Wrote', features_file, 'cls_score_all', cls_score_all.shape, 'event_times_all', event_times_all.shape)
             else: # saving only features
                 outputs = model(data, mode='test')
                 np_features = np.array(outputs, dtype = np.float32)
-                accumulated_features.append(np_features)
+                if batch_id == 0:
+                    accumulated_features['features'] = []
+                accumulated_features['features'].append(np_features)
 
                 if batch_id == len(data_loader) - 1: #last one need to save
-                    features = np.stack(accumulated_features)
+                    features = np.stack(accumulated_features['features'])
                     save_dict = {'features': features}
-                    np.save(os.path.join(cfg.features_dir, 'features.npy'), save_dict)
+                    features_file = os.path.join(cfg.inference_dir, 'features.npy')
+                    np.save(features_file, save_dict)
+                    print('Wrote', features_file, 'features', features.shape)
         else:
             outputs = model(data, mode='test')
             Metric.update(batch_id, data, outputs)
-    Metric.accumulate()
+
+    if not is_save_inference_result_mode(cfg):
+        Metric.accumulate()
