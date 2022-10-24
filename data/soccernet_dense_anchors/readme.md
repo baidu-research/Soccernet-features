@@ -70,7 +70,7 @@ Run the parallel jobs on a cluster, slurm based for example.
 
         paddlevideo/loader/dataset/__init__.py
 
-    Added temporal coordinate embedding to inputs. Removed event time loss for background class.
+    Added temporal coordinate embedding to inputs. Removed event time loss for background class. Added parser for one video file list.
 
         paddlevideo/loader/dataset/video_dense_anchors_one_file_inference.py
 
@@ -98,35 +98,31 @@ Run the parallel jobs on a cluster, slurm based for example.
 
         paddlevideo/modeling/heads/__init__.py
 
-5. Input and output format in train_step, val step etc.
+- Input and output format in train_step, val step etc.
 
-    paddlevideo/modeling/framework/recognizers/recognizer_transformer_dense_anchors.py
+        paddlevideo/modeling/framework/recognizers/recognizer_transformer_features_inference.py
+
+        paddlevideo/modeling/framework/recognizers/recognizer_transformer_dense_anchors.py
+        
+        paddlevideo/modeling/framework/recognizers/__init__.py
+
+- Add a new mode to log both class loss and event time loss.
+
+        paddlevideo/utils/record.py
+
+- Added MODEL.head.name and MODEL.head.output_mode branch to process outputs of class scores and event_times. Also unified feature inference with simple classification mode.
+
+        paddlevideo/tasks/test.py
+
+- Lower generate lower resolution script.
+
+        data/soccernet_inference/convert_video_to_lower_resolution_for_inference.py
+
+- Balanced samples do not seem necessary 
     
-    paddlevideo/modeling/framework/recognizers/__init__.py
+        data/soccernet_dense_anchors/balance_class_samples.py
 
-6. Add a new mode to log class loss and event time loss.
-
-    paddlevideo/utils/record.py
-
-7. Added parser for one video file list.
-
-    paddlevideo/loader/dataset/video_dense_anchors_one_file_inference.py
-
-    paddlevideo/loader/dataset/__init__.py
-
-8. Added MODEL.head.name and MODEL.head.output_mode branch to process outputs of class scores and event_times. Also unified feature inference with simple classification mode.
-
-    paddlevideo/tasks/test.py
-
-9. Lower generate lower resolution script.
-
-    data/soccernet_inference/convert_video_to_lower_resolution_for_inference.py
-
-10. Balanced samples do not seem necessary 
-    
-    data/soccernet_dense_anchors/balance_class_samples.py
-
-11. Collate file to replace the current library file
+- Collate file to replace the current library file
 
     /mnt/home/xin/.conda/envs/paddle_soccernet_feature_extraction/lib/python3.7/site-packages/paddle/fluid/dataloader/collate.py
 
