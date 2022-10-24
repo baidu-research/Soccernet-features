@@ -64,31 +64,39 @@ Run the parallel jobs on a cluster, slurm based for example.
 
 # List of changed files and corresponding changes.
 
-1. Label files processing are changed and labels of category and event_times are composed into dicts to send into the pipeline. Class names are added into the init.
+- Label files processing are changed and labels of category and event_times are composed into dicts to send into the pipeline. Class names are added into the init.
     
-    paddlevideo/loader/dataset/video_dense_anchors.py
+        paddlevideo/loader/dataset/video_dense_anchors.py
 
-    paddlevideo/loader/dataset/__init__.py
+        paddlevideo/loader/dataset/__init__.py
 
-2. Added EventSampler
+    Added temporal coordinate embedding to inputs. Removed event time loss for background class.
 
-    paddlevideo/loader/pipelines/sample.py
+        paddlevideo/loader/dataset/video_dense_anchors_one_file_inference.py
 
-    paddlevideo/loader/pipelines/__init__.py
+- Added EventSampler
 
-3. Multitask losses.
+        paddlevideo/loader/pipelines/sample.py
 
-    paddlevideo/modeling/losses/dense_anchor_loss.py
-    
-    paddlevideo/modeling/losses/__init__.py
+        paddlevideo/loader/pipelines/__init__.py
 
-4. Changed head output. Class and event times.
+    Added sampling one whole video file.
 
-    paddlevideo/modeling/heads/i3d_anchor_head.py
+        paddlevideo/loader/pipelines/sample_one_file.py
 
-    paddlevideo/modeling/heads/pptimesformer_anchor_head.py
+- Multitask losses.
 
-    paddlevideo/modeling/heads/__init__.py
+        paddlevideo/modeling/losses/dense_anchor_loss.py
+        
+        paddlevideo/modeling/losses/__init__.py
+
+- Changed head output. Class and event times.
+
+        paddlevideo/modeling/heads/i3d_anchor_head.py
+
+        paddlevideo/modeling/heads/pptimesformer_anchor_head.py
+
+        paddlevideo/modeling/heads/__init__.py
 
 5. Input and output format in train_step, val step etc.
 
@@ -99,18 +107,6 @@ Run the parallel jobs on a cluster, slurm based for example.
 6. Add a new mode to log class loss and event time loss.
 
     paddlevideo/utils/record.py
-
-7. Added temporal coordinate embedding to inputs. Removed event time loss for background class.
-
-    paddlevideo/loader/dataset/video_dense_anchors.py
-
-    paddlevideo/loader/dataset/video_dense_anchors_one_file_inference.py
-
-8. Added sampling one whole video file.
-
-    paddlevideo/loader/pipelines/sample_one_file.py
-
-    paddlevideo/loader/pipelines/__init__.py
 
 7. Added parser for one video file list.
 
@@ -267,6 +263,13 @@ sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
 --wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_lr_1e-5 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_lr_1e-5.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
 --output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_lr_1e-5.log"
 
+
+sbatch -p V100x8_mlong  --exclude asimov-231 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr_50_warmup main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr_50_warmup.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr_50_warmup.log"
+
+
+
 sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
 --wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
 --output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr.log"
@@ -275,6 +278,12 @@ sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=g
 sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
 --wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
 --output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100.log"
+
+
+sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_50 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_50.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_50.log"
+
 
 
 python -u -B -m paddle.distributed.launch --gpus="0" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_randomization main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_pptimesformer_randomization.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
