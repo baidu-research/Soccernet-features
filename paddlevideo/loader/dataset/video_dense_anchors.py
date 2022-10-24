@@ -21,6 +21,7 @@ import json
 from ..registry import DATASETS
 from .base import BaseDataset
 from ...utils import get_logger
+import paddle
 
 logger = get_logger("paddlevideo")
 
@@ -37,8 +38,12 @@ def add_coordinates_embedding_to_imgs(results):
     # coordinate_array = np.tile(coordinate_array, (3,1,2,2))
     # print(coordinate_array)
     coordinate_array = np.tile(coordinate_array, (b,1,h,w))
-    results['imgs'] += coordinate_array
-
+    if isinstance(results['imgs'], paddle.Tensor):
+        # results['imgs'] = results['imgs'] + paddle.to_tensor(coordinate_array)
+        # no coordinate array in pptimesformermode yet
+        pass
+    else: #nd.array
+        results['imgs'] += coordinate_array
     return
 
 @DATASETS.register()

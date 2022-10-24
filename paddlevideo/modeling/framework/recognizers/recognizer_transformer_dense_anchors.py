@@ -13,6 +13,7 @@
 from re import A
 import paddle
 import paddle.nn.functional as F
+from paddlevideo.modeling.heads.pptimesformer_head import ppTimeSformerHead
 from paddlevideo.utils import get_logger
 
 from ...registry import RECOGNIZERS
@@ -45,6 +46,7 @@ class RecognizerTransformerDenseAnchors(BaseRecognizer):
         class_labels = data_batch['label']
         event_time_labels = data_batch['event_time_labels']
         cls_score, event_times = self.forward_net(imgs)
+
         loss_metrics = self.head.loss(cls_score, class_labels, event_times, event_time_labels)
 
         # add other loss metrics, like top1, top 5 ...

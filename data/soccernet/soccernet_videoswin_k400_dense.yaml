@@ -29,7 +29,7 @@ MODEL: #MODEL field
             avg_type: 'prob' # 'score' or 'prob'
 
 DATASET: #DATASET field
-    batch_size: 5 #Mandatory, bacth size
+    batch_size: 1 #Mandatory, bacth size
     num_workers: 0 #Mandatory, XXX the number of subprocess on each GPU.
     test_batch_size: 1
     train:

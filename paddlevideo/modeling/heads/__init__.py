@@ -23,6 +23,7 @@ from .i3d_anchor_head import I3DAnchorHead
 from .movinet_head import MoViNetHead
 from .ms_tcn_head import MSTCNHead
 from .pptimesformer_head import ppTimeSformerHead
+from .pptimesformer_anchor_head import ppTimeSformerAnchorHead
 from .pptsm_head import ppTSMHead
 from .pptsn_head import ppTSNHead
 from .roi_head import AVARoIHead
@@ -46,5 +47,5 @@ __all__ = [
     'I3DHead', 'I3DAnchorHead', 'SingleRoIExtractor3D', 'AVARoIHead', 'BBoxHeadAVA', 'AddsHead',
     'ppTimeSformerHead', 'CollaborativeEnsemblerMS', 'MSTCNHead', 'ASRFHead',
     'MoViNetHead', 'CTRGCNHead', 'TokenShiftHead', 'ActionAttentionLstmHead',
-    'AGCN2sHead'
+    'AGCN2sHead', 'ppTimeSformerAnchorHead'
 ]

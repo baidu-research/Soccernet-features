@@ -45,6 +45,7 @@ class I3DAnchorHead(BaseHead):
                  std=0.01,
                  event_time_loss_weight = 1.0,
                  output_mode = None,
+                 events_lr_multiplier = 1.0,
                  **kwargs):
 
         super().__init__(num_classes, in_channels, loss_cfg, **kwargs)
@@ -68,8 +69,8 @@ class I3DAnchorHead(BaseHead):
         self.fc_event_times = nn.Linear(
             self.in_channels,
             self.num_classes,
-            # weight_attr=ParamAttr(learning_rate=0.001),
-            # bias_attr=ParamAttr(learning_rate=0.001),
+            weight_attr=ParamAttr(learning_rate=events_lr_multiplier),
+            bias_attr=ParamAttr(learning_rate=events_lr_multiplier),
         )
 
         if self.spatial_type == 'avg':

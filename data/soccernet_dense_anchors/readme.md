@@ -48,6 +48,12 @@ Run the parallel jobs on a cluster, slurm based for example.
     --output="data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.log"
     done
 
+## Generate json labels
+
+    python data/soccernet_dense_anchors/generate_whole_video_inference_jsons.py \
+    --videos_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference \
+    --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists
+
 # Train command
 
     python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60 main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
@@ -56,9 +62,8 @@ Run the parallel jobs on a cluster, slurm based for example.
 
     python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet/soccernet_videoswin_k400_dense_one_file_inference.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
 
-
-
 # List of changed files and corresponding changes.
+
 1. Label files processing are changed and labels of category and event_times are composed into dicts to send into the pipeline. Class names are added into the init.
     
     paddlevideo/loader/dataset/video_dense_anchors.py
@@ -80,6 +85,8 @@ Run the parallel jobs on a cluster, slurm based for example.
 4. Changed head output. Class and event times.
 
     paddlevideo/modeling/heads/i3d_anchor_head.py
+
+    paddlevideo/modeling/heads/pptimesformer_anchor_head.py
 
     paddlevideo/modeling/heads/__init__.py
 
@@ -207,11 +214,109 @@ sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=g
 --output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60.log"
 
 
-
 sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
 --wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/dense_anchors_lr_0.1 main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.1.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
 --output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_21_dense_lr_0.1.log"
 
 
+sbatch -p V100x8_mlong --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_randomization main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_pptimesformer_randomization.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_randomization.log"
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_adamW main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_adamW.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_adamW.log"
+
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale_adamW main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale_adamW.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale_adamW.log"
+
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale_adamW main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale_adamW.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale_adamW.log"
+
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale.log"
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale.log"
+
+
+sbatch -p V100x8_mlong --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale.log"
+
+
+
+sbatch -p V100x8_mlong --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense.log"
+
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_lr_1e-4 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_lr_1e-4.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_lr_1e-4.log"
+
+
+sbatch -p V100x8 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_lr_1e-5 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_lr_1e-5.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_lr_1e-5.log"
+
+sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_event_lr.log"
+
+
+sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100.log"
+
+
+python -u -B -m paddle.distributed.launch --gpus="0" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_randomization main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_pptimesformer_randomization.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
+
+some augmentation error
+
+在add_coordinates_embedding_to_imgs的时候pyav得到的是tensor， decord是np array? pyav decode完就是paddle.tensor了？
+
+'decord'
+ipdb> type(imgs)
+<class 'numpy.ndarray'>
+ipdb> imgs.shape
+(3, 16, 256, 456)
+
+
+python -u -B -m paddle.distributed.launch --gpus="0" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense main.py --validate -c data/soccernet/soccernet_pptimesformer_k400_videos_dense.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams
+
+python -u -B -m paddle.distributed.launch --gpus="0" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense main.py --validate -c data/soccernet/soccernet_videoswin_k400_dense.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams
+
+
+
 TODO:
 Test one video inference, test on longer video
+
+
+git filter-branch --index-filter \
+    'git rm -rf --cached --ignore-unmatch data/soccernet/generate_training_short_clips.sh' HEAD
+
+ffmpeg -i "/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/england_epl/2015-2016/2015-08-29 - 17-00 Manchester City 2 - 0 Watford/1_HQ.mkv" -vf scale=456x256 -map 0:v -avoid_negative_ts make_zero -c:v libx264 -c:a aac "/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference/england_epl.2015-2016.2015-08-29_-_17-00_Manchester_City_2_-_0_Watford.1_LQ.mkv" -max_muxing_queue_size 9999
+
+
+
+for i in {0..28};
+do
+sed -n ${i}~29p data/soccernet_inference/convert_video_rerun.sh > data/soccernet_inference/convert_video_rerun_parallel/${i}.sh;
+done
+
+
+
+for i in {0..28};
+do
+sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+"echo yes | bash data/soccernet_inference/convert_video_rerun_parallel/${i}.sh" \
+--output="data/soccernet_inference/convert_video_rerun_parallel/${i}.log"
+done

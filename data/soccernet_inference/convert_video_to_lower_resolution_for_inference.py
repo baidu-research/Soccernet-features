@@ -18,7 +18,7 @@ def main(args):
         new_shortname_root = '.'.join(parts[-4:])
         new_filename = os.path.join(args.output_folder, new_shortname_root).replace(" ", "_").replace('HQ', 'LQ')
         
-        command = f'ffmpeg -i "{filename}" -vf scale=456x256 -c:v libx264 -c:a aac "{new_filename}"'
+        command = f'ffmpeg -i "{filename}" -vf scale=456x256 -map 0:v -c:v libx264 -c:a aac "{new_filename}"'
 
         print(command)
 
