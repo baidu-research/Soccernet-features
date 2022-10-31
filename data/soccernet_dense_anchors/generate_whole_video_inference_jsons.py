@@ -45,8 +45,8 @@ def main(args):
             with open(json_filename, 'w') as f:
                 json.dump(data, f)
         except Exception as e:
-            print(filename)
-            # print(e)
+            # print(filename)
+            print(e)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

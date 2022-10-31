@@ -92,11 +92,14 @@ class ppTimeSformerAnchorHead(BaseHead):
 
         if self.output_mode == 'features':
             return x
+
+        cls_score = self.fc(x)
+        event_times = F.sigmoid(self.fc_event_times(x)) # need to normalize this to be between 0 and 1
+
+        if self.output_mode == 'cls_score_event_times_features':
+            return cls_score, event_times, x
         # probability_time mode
         else:
-            cls_score = self.fc(x)
-            event_times = F.sigmoid(self.fc_event_times(x)) # need to normalize this to be between 0 and 1
-
             return cls_score, event_times
 
         # score = self.fc(x)

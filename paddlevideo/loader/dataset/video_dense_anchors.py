@@ -110,25 +110,12 @@ class VideoDenseAnchorsDataset(BaseDataset):
                 idx = random.randint(0, len(self.info) - 1)
                 continue
             
-            # print(results['imgs'][0,:,3,3])
             add_coordinates_embedding_to_imgs(results)
-            # print(results['imgs'][0,:,3,3])
-            # ddd
+
             # print(results['imgs'].shape)
-            # (3, 16, 224, 224)
+            # [3, 16, 224, 224]
 
-            # b = results['imgs'].shape[0]
-            # t = results['imgs'].shape[1]
-            # h = results['imgs'].shape[2]
-            # w = results['imgs'].shape[3]
-
-            # # add coordinate embedding for better regression
-            # coordinate_array = np.linspace(-0.5, 0.5, t)
-            # coordinate_array = coordinate_array.reshape(1,t,1,1)
-            # # coordinate_array = np.tile(coordinate_array, (3,1,2,2))
-            # # print(coordinate_array)
-            # coordinate_array = np.tile(coordinate_array, (b,1,h,w))
-            # results['imgs'] += coordinate_array
+            # import ipdb; ipdb.set_trace()
 
             return {
                 'imgs': results['imgs'], 
@@ -153,7 +140,49 @@ class VideoDenseAnchorsDataset(BaseDataset):
             
             add_coordinates_embedding_to_imgs(results)
 
-            return {
-                'imgs': results['imgs'], 
-                'label': np.array([results['label']]),
-                'event_time_labels': np.array(results['event_time_in_sampled_clip_fraction'], dtype = np.float32)}
+            data = {
+                'imgs': results['imgs']}
+
+            # print(results['imgs'].shape)
+            # [3, 48, 224, 224]
+            # import ipdb; ipdb.set_trace()
+
+            if 'label' in results:
+                data['label'] = np.array([results['label']])
+            if 'event_time_labels' in results:
+                data['event_time_labels'] = np.array(results['event_time_in_sampled_clip_fraction'], dtype = np.float32)
+            return data
+
+@DATASETS.register()
+class VideoDenseAnchorsOneFileInferenceDataset(VideoDenseAnchorsDataset):
+    """Video dataset for action recognition
+       The dataset loads raw videos and apply specified transforms on them.
+       The index file is a file with multiple lines, and each line indicates
+       a sample video with the filepath and label, which are split with a whitesapce.
+       Example of a inde file:
+       .. code-block:: txt
+           path/000.mp4 1
+           path/001.mp4 1
+           path/002.mp4 2
+           path/003.mp4 2
+       Args:
+           file_path(str): Path to the index file.
+           pipeline(XXX): A sequence of data transforms.
+           **kwargs: Keyword arguments for ```BaseDataset```.
+    """
+    def __init__(self, file_path, pipeline, sample_length_secs = 5.0, num_retries=5, suffix='', **kwargs):
+        self.sample_length_secs = sample_length_secs
+        super().__init__(file_path, pipeline, num_retries, suffix, **kwargs)
+
+    def load_file(self):
+        """Load index file to get video information."""
+        info = []
+        with open(self.file_path, 'r') as fin:
+            file_data = json.load(fin)
+            length_secs = file_data['length_secs']
+            for i in range(int(length_secs - self.sample_length_secs)):
+                inference_clip_data = copy.deepcopy(file_data)
+                inference_clip_data['start_secs'] = i
+                inference_clip_data['end_secs'] = i + self.sample_length_secs
+                info.append(inference_clip_data)
+        return info

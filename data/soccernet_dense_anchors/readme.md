@@ -48,19 +48,28 @@ Run the parallel jobs on a cluster, slurm based for example.
     --output="data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.log"
     done
 
-## Generate json labels
+# Train command
+
+    python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60 main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
+
+## Generate inference json job files
 
     python data/soccernet_dense_anchors/generate_whole_video_inference_jsons.py \
     --videos_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference \
     --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists
 
-# Train command
+## Sample inference command
 
-    python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60 main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00007.pdparams
+    INFERENCE_JSON_CONFIG=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/spain_laliga.2016-2017.2017-05-21_-_21-00_Malaga_0_-_2_Real_Madrid.2_LQ.mkv
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+    SHORTNAME=`basename "$INFERENCE_JSON_CONFIG" .mkv`
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$SHORTNAME
+    echo $INFERENCE_DIR
 
-# Inference command
+    mkdir $INFERENCE_DIR
 
-    python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet/soccernet_videoswin_k400_dense_one_file_inference.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
+    python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG 
 
 # List of changed files and corresponding changes.
 
@@ -83,6 +92,10 @@ Run the parallel jobs on a cluster, slurm based for example.
     Added sampling one whole video file.
 
         paddlevideo/loader/pipelines/sample_one_file.py
+    
+    Added decoder for just one file 
+
+        paddlevideo/loader/pipelines/decode.py
 
 - Multitask losses.
 
@@ -124,15 +137,15 @@ Run the parallel jobs on a cluster, slurm based for example.
 
 - Collate file to replace the current library file
 
-    /mnt/home/xin/.conda/envs/paddle_soccernet_feature_extraction/lib/python3.7/site-packages/paddle/fluid/dataloader/collate.py
+        /mnt/home/xin/.conda/envs/paddle_soccernet_feature_extraction/lib/python3.7/site-packages/paddle/fluid/dataloader/collate.py
 
-12. Config files
+- Config files
 
-    data/soccernet/soccernet_videoswin_k400_dense_one_file_inference.yaml
+        data/soccernet/soccernet_videoswin_k400_dense_one_file_inference.yaml
 
-13. Updated to support dense anchors
+- Updated to support dense anchors
 
-    data/soccernet/split_annotation_into_train_val_test.py
+        data/soccernet/split_annotation_into_train_val_test.py
 
 # Comments
 
@@ -140,6 +153,9 @@ Run the parallel jobs on a cluster, slurm based for example.
 
 
 
+
+
+paddlevideo/loader/pipelines/decode.py
 
 
 
@@ -325,3 +341,128 @@ sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
 "echo yes | bash data/soccernet_inference/convert_video_rerun_parallel/${i}.sh" \
 --output="data/soccernet_inference/convert_video_rerun_parallel/${i}.log"
 done
+
+
+
+override weight, override jobs file
+
+sbatch each line
+
+weight file is always in the output folder. output/$model_name
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/*; do echo $FILE; done
+
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00007.pdparams
+INFERENCE_JSON_CONFIG=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/spain_laliga.2016-2017.2017-05-21_-_21-00_Malaga_0_-_2_Real_Madrid.2_LQ.mkv
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+SHORTNAME=`basename "$INFERENCE_JSON_CONFIG" .mkv`
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$SHORTNAME
+echo $INFERENCE_DIR
+
+mkdir $INFERENCE_DIR
+
+python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG 
+
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/*; 
+
+
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00012.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/*; 
+do 
+echo $FILE;
+INFERENCE_JSON_CONFIG=$FILE
+SHORTNAME=`basename "$INFERENCE_JSON_CONFIG" .mkv`
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$SHORTNAME
+mkdir $INFERENCE_DIR
+
+sbatch -p 1080Ti,2080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap "python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$SHORTNAME  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG" \
+--output="/mnt/storage/gait-0/xin//logs/$SHORTNAME.log"
+
+echo /mnt/storage/gait-0/xin//logs/$SHORTNAME.log
+
+done
+
+
+
+python -u -B -m paddle.distributed.launch --gpus="0" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_50_compare main.py --validate -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_compare.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams
+
+Timesformer does not have coordinate embedding
+
+
+
+/mnt/storage/gait-0/xin/soccernet_features/spain_laliga.2016-2017.2017-05-21_-_21-00_Malaga_0_-_2_Real_Madrid.2_LQ/features.npy
+
+a = np.load("/mnt/storage/gait-0/xin/soccernet_features/spain_laliga.2016-2017.2017-05-21_-_21-00_Malaga_0_-_2_Real_Madrid.2_LQ/features.npy", allow_pickle = True)
+
+a
+array({'features': array([[[-0.11292514, -0.1312699 ,  0.07413186, ..., -0.0345116 ,
+          0.09101289,  0.06796468]],
+
+       [[-0.07808004, -0.10946111, -0.09529223, ...,  0.01151106,
+          0.09962937, -0.09179376]],
+
+       [[-0.0843792 , -0.10908166, -0.09925203, ...,  0.00971421,
+          0.09548534, -0.08486937]],
+
+       [[-0.08389836, -0.10990171, -0.1055292 , ...,  0.00767103,
+          0.08909672, -0.07665699]],
+
+       [[-0.08546472, -0.10893059, -0.10001937, ...,  0.00777278,
+          0.08489308, -0.07387131]]], dtype=float32)}, dtype=object)
+
+
+/mnt/storage/gait-0/xin/soccernet_features
+
+
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/*; 
+do 
+line=`basename "$FILE" .mkv`
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+echo "sbatch -p TitanXx8_mlong,TitanXx8_slong,2080Ti_mlong,1080Ti_slong,1080Ti_mlong,1080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+--output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done
+
+
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+
+cat inference_matches_todo.txt | while read line 
+do 
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+
+echo "sbatch -p 1080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+--output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done
+
+1080Ti
+watch tail -n 20 /mnt/storage/gait-0/xin//logs/germany_bundesliga.2016-2017.2016-10-22_-_16-30_Ingolstadt_3_-_3_Dortmund.2_LQ.log
+watch tail -n 20 /mnt/storage/gait-0/xin//logs/germany_bundesliga.2016-2017.2016-10-22_-_16-30_Ingolstadt_3_-_3_Dortmund.2_LQ/workerlog.0
+
+TitanXx8
+watch tail -n 20 /mnt/storage/gait-0/xin//logs/spain_laliga.2016-2017.2016-11-27_-_22-45_Real_Sociedad_1_-_1_Barcelona.1_LQ.log
+watch tail -n 20 /mnt/storage/gait-0/xin//logs/spain_laliga.2016-2017.2016-11-27_-_22-45_Real_Sociedad_1_-_1_Barcelona.1_LQ/workerlog.0
+
+
+watch tail -n 20 /mnt/storage/gait-0/xin//logs/england_epl.2014-2015.2015-02-21_-_18-00_Chelsea_1_-_1_Burnley.1_LQ/workerlog.0
+watch tail -n 20 /mnt/storage/gait-0/xin//logs/england_epl.2014-2015.2015-02-21_-_18-00_Chelsea_1_-_1_Burnley.2_LQ/workerlog.0
+
+python data/soccernet_dense_anchors/check_unfinished_inference.py

@@ -14,6 +14,7 @@
 
 import paddle
 from paddlevideo.utils import get_logger, load
+import time
 
 from ..loader.builder import build_dataloader, build_dataset
 from ..metrics import build_metric
@@ -152,16 +153,18 @@ def test_model(cfg, weights, parallel=True):
 
     accumulated_features = {}
     for batch_id, data in enumerate(data_loader):
+        start = time.time()
         if cfg.model_name in [
                 'CFBI'
         ]:  # for VOS task, dataset for video and dataloader for frames in each video
             Metric.update(batch_id, data, model)
         elif is_save_inference_result_mode(cfg): # save feature mode test code
+            print('batch_id', batch_id, '/', len(data_loader))
             # saving cls score and event_times, the default for anchor head
-            if cfg.MODEL.head.name in ['I3DAnchorHead'] and cfg.MODEL.head.output_mode in ['cls_score_event_times']:
+            if cfg.MODEL.head.name in ['I3DAnchorHead', 'ppTimeSformerAnchorHead'] and cfg.MODEL.head.output_mode in ['cls_score_event_times']:
                 # default cls_score and event_times
-                cls_score, event_times = model(data, mode='test')
-
+                result = model(data, mode='test')
+                cls_score, event_times = result
                 if batch_id == 0:
                     accumulated_features['cls_score'] = []
                     accumulated_features['event_times'] = []
@@ -176,6 +179,26 @@ def test_model(cfg, weights, parallel=True):
                     features_file = os.path.join(cfg.inference_dir, 'features.npy')
                     np.save(features_file, save_dict)
                     print('Wrote', features_file, 'cls_score_all', cls_score_all.shape, 'event_times_all', event_times_all.shape)
+            elif cfg.MODEL.head.name in ['I3DAnchorHead', 'ppTimeSformerAnchorHead'] and cfg.MODEL.head.output_mode in ['cls_score_event_times_features']:
+                result = model(data, mode='test')
+                cls_score, event_times, features = result
+                if batch_id == 0:
+                    accumulated_features['cls_score'] = []
+                    accumulated_features['event_times'] = []
+                    accumulated_features['features'] = []
+
+                accumulated_features['cls_score'].append(np.array(cls_score, dtype = np.float32))
+                accumulated_features['event_times'].append(np.array(event_times, dtype = np.float32))
+                accumulated_features['features'].append(np.array(features, dtype = np.float32))
+
+                if batch_id == len(data_loader) - 1: #last one need to save
+                    cls_score_all = np.stack(accumulated_features['cls_score'])
+                    event_times_all = np.stack(accumulated_features['event_times'])
+                    features_all = np.stack(accumulated_features['features'])
+                    save_dict = {'cls_score_all': cls_score_all, 'event_times': event_times_all, 'features': features_all}
+                    features_file = os.path.join(cfg.inference_dir, 'features.npy')
+                    np.save(features_file, save_dict)
+                    print('Wrote', features_file, 'cls_score_all', cls_score_all.shape, 'event_times_all', event_times_all.shape, 'features_all', features_all.shape)
             else: # saving only features
                 outputs = model(data, mode='test')
                 np_features = np.array(outputs, dtype = np.float32)
@@ -189,6 +212,8 @@ def test_model(cfg, weights, parallel=True):
                     features_file = os.path.join(cfg.inference_dir, 'features.npy')
                     np.save(features_file, save_dict)
                     print('Wrote', features_file, 'features', features.shape)
+            print('Test loop took', time.time() - start)
+            start = time.time()
         else:
             outputs = model(data, mode='test')
             Metric.update(batch_id, data, outputs)

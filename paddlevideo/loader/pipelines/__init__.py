@@ -21,7 +21,7 @@ from .augmentations import (CenterCrop, ColorJitter, GroupRandomFlip,
                             RandomBrightness, RandomHue, RandomSaturation)
 from .augmentations_ava import *
 from .compose import Compose
-from .decode import FeatureDecoder, FrameDecoder, VideoDecoder, ActionFeatureDecoder
+from .decode import FeatureDecoder, FrameDecoder, VideoDecoder, ActionFeatureDecoder, OneVideoDecoder
 from .decode_image import ImageDecoder
 from .decode_sampler import DecodeSampler
 from .mix import Cutmix, Mixup, VideoMix
@@ -52,5 +52,5 @@ __all__ = [
     'RandomGamma', 'MultiCenterCrop', 'RandomBrightness', 'RandomHue',
     'RandomSaturation', 'UniformSampleFrames', 'PoseDecode', 'PoseCompact',
     'Resize', 'RandomResizedCrop_V2', 'Flip_V2', 'GeneratePoseTarget',
-    'FormatShape', 'Collect'
+    'FormatShape', 'Collect', 'OneVideoDecoder'
 ]

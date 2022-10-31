@@ -166,5 +166,4 @@ class OneFileSampler(object):
 
         frames_idx = np.linspace(start_idx, end_idx,
                                     self.num_seg).astype(np.int64)
-
         return self._get(frames_idx, results)
