@@ -1,73 +1,144 @@
-[English](README_en.md) | 中文
+![Soccernet Event Detection](image.gif)
 
-# PaddleVideo
+# Preface
 
-![python version](https://img.shields.io/badge/python-3.7+-orange.svg) ![paddle version](https://img.shields.io/badge/PaddlePaddle-2.3.1-blue)
+This repo contains code to finetune backbone models on the Soccernet dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. In 2021 and 2022, the winning solutions for the Soccernet Challenge localization track used finetuned features generated this way. In the next section, links to the previous best features are attached. This repo is made public so that further progress on feature pretraining can be made or inference could be done on data other than Soccernet (If you do either of these things, do not forget to give a reference to this work). Once better features are generated, this repo will be updated.
 
-## 简介
+## Best Pretrained Soccernet Features from 2021
 
-PaddleVideo旨在打造一套丰富、领先且实用的Video工具库，旨在帮助开发者更好的进行视频领域的学术研究和产业实践。
+This other [repo](https://github.com/baidu-research/vidpress-sports) contains the pretrained Soccernet features winning the CVPR 2021 ActivityNet Challange, Temporal Localization track, SoccerNet Challenge for 2021 and 2022. The features were extracted from an ensemble of 5 models. Those are the best features known for Soccernet so far. 
 
-<div align="center">
-  <img src="docs/images/home.gif" width="450px"/><br>
-</div>
+# Train your own model
 
-## 近期更新
+## Generate low resolution clips
 
-- 发布轻量化行为识别模型**🔥[PP-TSMv2](./docs/zh-CN/model_zoo/recognition/pp-tsm_v2.md)**, Kinetics-400精度74.38%，25fps的10s视频cpu推理时间仅需433ms.各模型性能对比[benchmark](./docs/zh-CN/benchmark.md).
-- 新增[知识蒸馏](./docs/zh-CN/distillation.md)功能.
-- 新增基于transformer的行为识别模型[TokenShift](https://github.com/PaddlePaddle/PaddleVideo/blob/develop/docs/zh-CN/model_zoo/recognition/tokenshift_transformer.md).
-- 新增基于骨骼点的行为识别模型[2s-ACGN](https://github.com/PaddlePaddle/PaddleVideo/blob/develop/docs/zh-CN/model_zoo/recognition/agcn2s.md)、[CTR-GCN](./docs/zh-CN/model_zoo/recognition/ctrgcn.md).
+In this section, we will be extracting short 10 seconds clips from the Soccernet videos and the clips will have a lower resolution for training.
 
+Download raw HQ video data from the [Soccernet official website](https://www.soccer-net.org/download). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder.
 
-👀 🌟  **《产业级视频技术与应用案例》系列课程回放链接**:  https://aistudio.baidu.com/aistudio/course/introduce/6742 🌟
+Run the following command. The output is commands to extract the clips. Redirect the output into a file because there are many extraction commands and you will need to split the file to run the commands in parallel. Choose a folder and set the environment variable $CLIPS_FOLDER to save your clips.
 
-​																	  💖 **欢迎大家扫码入群讨论** 💖
-<div align="center">
-  <img src="docs/images/user_group.png" width=250/></div>
+    python data/soccernet/generate_training_short_clips.py --input_folder $RAW_VIDEOS_ROOT --clips_folder=$CLIPS_FOLDER > data/soccernet/generate_training_short_clips.sh
 
-- 添加成功后回复【视频】加入交流群
+Make a folder to save the paralle scripts:
 
-## 特性
+    mkdir data/soccernet/short_clips_parallel
 
-支持多种Video相关前沿算法，在此基础上打造产业级特色模型[PP-TSM](docs/zh-CN/model_zoo/recognition/pp-tsm.md)和[PP-TSMv2](docs/zh-CN/model_zoo/recognition/pp-tsm_v2.md)，并打通数据生产、模型训练、压缩、预测部署全流程。
+This is a sample to split into 400 equal parts:
 
-<div align="center">
-    <img src="./docs/images/features.png" width="700">
-</div>
+    for i in {0..399};
+    do
+        sed -n ${i}~400p data/soccernet/generate_training_short_clips.sh > data/soccernet/short_clips_parallel/${i}.sh;
+    done
 
-## 快速开始
+The commands may get stuck on a few videos and render the jobs stuck, so here is another split into 401 parts to run after the above job.
 
-- 一行命令快速使用: [快速开始](./docs/zh-CN/quick_start.md)
+    for i in {0..400};
+    do
+        sed -n ${i}~401p data/soccernet/generate_training_short_clips.sh > data/soccernet/short_clips_parallel_401/${i}.sh;
+    done
 
-## 场景应用
+## Run the jobs
 
-PaddleVideo场景应用覆盖体育、互联网、工业、医疗行业，在PP-TSM的基础能力之上，以案例的形式展示利用场景数据微调、模型优化方法、数据增广等内容，为开发者实际落地提供示范与启发。详情可查看[应用](./applications/)。
+Sample code to run them on a slurm based cluster:
 
-## 文档教程
+    for i in {0..399};
+    do
+    sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+    "echo no | bash data/soccernet/short_clips_parallel/${i}.sh" \
+    --output="data/soccernet/short_clips_parallel/${i}.log"
+    done
 
-- [快速开始](./docs/zh-CN/quick_start.md)
-- [安装说明](./docs/zh-CN/install.md)
-- [训练/测试/推理全流程使用指南](./docs/zh-CN/usage.md)
-- [PP-TSM行为识别🔥](./docs/zh-CN/model_zoo/recognition/pp-tsm.md)
-  - [模型库](./docs/zh-CN/model_zoo/recognition/pp-tsm.md#7)
-  - [模型训练](./docs/zh-CN/model_zoo/recognition/pp-tsm.md#4)
-  - [模型压缩](./deploy/slim/)
-      - [模型量化](./deploy/slim/readme.md)
-      - [知识蒸馏](./docs/zh-CN/distillation.md)
-  - [推理部署](./deploy/)
-      - [基于Python预测引擎推理](./docs/zh-CN/model_zoo/recognition/pp-tsm.md#62)
-      - [基于C++预测引擎推理](./deploy/cpp_infer/readme.md)
-      - [服务端部署](./deploy/python_serving/readme.md)
-      - [Paddle2ONNX模型转化与预测](./deploy/paddle2onnx/readme.md)
-      - [Benchmark](./docs/zh-CN/benchmark.md)
-- [前沿算法与模型](./docs/zh-CN/model_zoo/README.md)🚀
-- [数据集](./docs/zh-CN/dataset/README.md)
-- [场景应用](./applications/README.md)
-- [数据标注](./applications/BILS)
-- [赛事支持](./docs/zh-CN/competition.md)
-- [贡献代码](./docs/zh-CN/contribute/README.md)
+For the seconds split,
 
-## 许可证书
+    for i in {0..400};
+    do
+    sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+    "echo no | bash data/soccernet/short_clips_parallel_401/${i}.sh" \
+    --output="data/soccernet/short_clips_parallel_401/${i}.log"
+    done
 
-本项目的发布受[Apache 2.0 license](LICENSE)许可认证。
+## Generate label files
+
+Set $RAW_VIDEOS_ROOT to the root of the folder where all HQ Soccernet videos are downloaded into. Set $LABELS_ROOT to the folder where the labels are.
+
+    python data/soccernet/generate_labels.py \
+    --extension mkv \
+    --raw_videos_root $RAW_VIDEOS_ROOT \
+    --labels_root $LABELS_ROOT \
+    --clips_folder $CLIPS_FOLDER
+
+Convert the labels files into one list annotation.txt
+
+    python data/soccernet/labels_to_pdvideo_format.py \
+    --clips_folder $CLIPS_FOLDER \
+    --output_folder $CLIPS_FOLDER
+
+Split into train val test. $SPLITS_FOLDER contains the Soccernet numpy files which contain the train, val, test match names.
+
+    python data/soccernet/split_annotation_into_train_val_test.py \
+    --splits_folder $SPLITS_FOLDER \
+    --annotation_file $CLIPS_FOLDER/annotation.txt \
+    --clips_folder $CLIPS_FOLDER
+
+Now you should have train.list, val.list, test.list in $CLIPS_FOLDER that are in kinetics format that can be trained with any video classification model.
+
+# Prepare training with class and event time labels
+
+Generate label_mapping.txt (for category to category index map) and dense.list files.
+
+    python data/soccernet_dense_anchors/generate_dense_anchors_labels.py \
+    --clips_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256 \
+    --output_folder ./
+
+Split into train, val, test
+
+    python data/soccernet/split_annotation_into_train_val_test.py \
+    --annotation_file dense.list \
+    --clips_folder ./ \
+    --mode json
+
+Make paddle label files?
+
+# Inference on whole video files
+
+## Convert video input into lower resolution
+
+This generates a sample script that converts all of the Soccernet videos.
+
+    python data/soccernet_inference/convert_video_to_lower_resolution_for_inference.py \
+    --input_folder /mnt/big/multimodal_sports/SoccerNet_HQ/raw_data \
+    --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference > \
+    data/soccernet_inference/convert_video_to_lower_resolution_for_inference.sh
+
+## Parallelize resolution conversion
+
+Each 45 min video files takes about 10 min to convert to lower resolution. So we parallelize to 100 such jobs.
+
+    for i in {0..99};
+    do
+    sed -n ${i}~100p data/soccernet_inference/convert_video_to_lower_resolution_for_inference.sh > data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.sh;
+    done
+
+Run the parallel jobs on a cluster, slurm based for example.
+
+    for i in {0..99};
+    do
+    sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+    "echo no | bash data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.sh" \
+    --output="data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.log"
+    done
+
+## Generate json labels
+
+    python data/soccernet_dense_anchors/generate_whole_video_inference_jsons.py \
+    --videos_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference \
+    --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists
+
+# Train command
+
+    python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60 main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
+
+# Inference command
+
+    python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet/soccernet_videoswin_k400_dense_one_file_inference.yaml -w pretrained_weights/swin_base_patch4_window7_224.pdparams
