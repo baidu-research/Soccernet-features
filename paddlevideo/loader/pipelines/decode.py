@@ -26,6 +26,7 @@ import math
 import random
 from ..registry import PIPELINES
 
+import gc
 
 def get_start_end_idx(video_size, clip_size, clip_idx, num_clips):
     delta = max(video_size - clip_size, 0)
@@ -152,6 +153,7 @@ class VideoDecoder(object):
 
                 container.close()
 
+                # a lot of space of optimization here
                 frames = [frame.to_rgb().to_ndarray() for frame in video_frames]
                 clip_sz = self.sampling_rate * self.num_seg / self.target_fps * fps
 
@@ -417,41 +419,43 @@ class OneVideoDecoder(object):
             else:
                 raise NotImplementedError
 
-            if self.container is None:
+            if self.frames is not None:
+                results['frames'] = self.frames
+                results['frames_len'] = len(self.frames)
+                return results
+
+            else:
                 container = av.open(file_path)
                 print('opened', file_path)
                 self.container = container
                 self.fps = float(container.streams.video[0].average_rate)
                 self.frames_length = container.streams.video[0].frames
                 self.duration = container.streams.video[0].duration
-            else:
-                container = self.container
 
-            num_clips = 1  # always be 1
+                num_clips = 1  # always be 1
 
-            # decode process
-            fps = self.fps
-            frames_length = self.frames_length
-            duration = self.duration
+                # decode process
+                fps = self.fps
+                frames_length = self.frames_length
+                duration = self.duration
 
-            if duration is None:
-                # If failed to fetch the decoding information, decode the entire video.
-                decode_all_video = True
-                video_start_pts, video_end_pts = 0, math.inf
-            else:
-                decode_all_video = False
-                start_idx, end_idx = get_start_end_idx(
-                    frames_length,
-                    self.sampling_rate * self.num_seg / self.target_fps * fps,
-                    clip_idx, num_clips)
-                timebase = duration / frames_length
-                video_start_pts = int(start_idx * timebase)
-                video_end_pts = int(end_idx * timebase)
+                if duration is None:
+                    # If failed to fetch the decoding information, decode the entire video.
+                    decode_all_video = True
+                    video_start_pts, video_end_pts = 0, math.inf
+                else:
+                    decode_all_video = False
+                    start_idx, end_idx = get_start_end_idx(
+                        frames_length,
+                        self.sampling_rate * self.num_seg / self.target_fps * fps,
+                        clip_idx, num_clips)
+                    timebase = duration / frames_length
+                    video_start_pts = int(start_idx * timebase)
+                    video_end_pts = int(end_idx * timebase)
 
-            frames = None
-            # If video stream was found, fetch video frames from the video.
-            if container.streams.video:
-                if self.frames is None: # self.container is assigned but has not read the frames in yet
+                frames = None
+                # If video stream was found, fetch video frames from the video.
+                if container.streams.video:
                     margin = 1024
                     seek_offset = max(video_start_pts - margin, 0)
 
@@ -473,32 +477,42 @@ class OneVideoDecoder(object):
                             tmp_frames[frame.pts] = frame
                             if buffer_count >= 0:
                                 break
-                    video_frames = [tmp_frames[pts] for pts in sorted(tmp_frames)]
-                    self.video_frames = video_frames
+                    # video_frames = [tmp_frames[pts] for pts in sorted(tmp_frames)]
+                    # self.video_frames = video_frames
+
+                    # container.close()
+
+                    # # print('container seeking')
+                    # frames = [frame.to_rgb().to_ndarray() for frame in self.video_frames]
+
+                    # self.video_frames = None
+                    # self.frames = frames
+                    # self.container = container
 
                     container.close()
+                    self.frames = [tmp_frames[pts].to_rgb().to_ndarray() for pts in sorted(tmp_frames)]
+                    del tmp_frames
+                    gc.collect()
 
                     # print('container seeking')
-                    frames = [frame.to_rgb().to_ndarray() for frame in self.video_frames]
 
-                    self.frames = frames
                     self.container = container
 
-                # print('get frames')
-                clip_sz = self.sampling_rate * self.num_seg / self.target_fps * fps
+                    # print('get frames')
+                    clip_sz = self.sampling_rate * self.num_seg / self.target_fps * fps
 
-                start_idx, end_idx = get_start_end_idx(
-                    len(self.frames),  # frame_len
-                    clip_sz,
-                    clip_idx if decode_all_video else
-                    0,  # If decode all video, -1 in train and valid, 0 in test;
-                    # else, always 0 in train, valid and test, as we has selected clip size frames when decode.
-                    1)
-                results['frames'] = self.frames
-                results['frames_len'] = len(self.frames)
-                # indices not really used
-                results['start_idx'] = start_idx
-                results['end_idx'] = end_idx
+                    start_idx, end_idx = get_start_end_idx(
+                        len(self.frames),  # frame_len
+                        clip_sz,
+                        clip_idx if decode_all_video else
+                        0,  # If decode all video, -1 in train and valid, 0 in test;
+                        # else, always 0 in train, valid and test, as we has selected clip size frames when decode.
+                        1)
+                    results['frames'] = self.frames
+                    results['frames_len'] = len(self.frames)
+                    # indices not really used
+                    # results['start_idx'] = start_idx
+                    # results['end_idx'] = end_idx
         else:
             raise NotImplementedError
         return results

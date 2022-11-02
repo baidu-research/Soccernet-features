@@ -10,6 +10,8 @@ def main(args):
         features_filename = os.path.join(subfolder, 'features.npy')
         match_to_do = subfolder.split('/')[-2]
 
+        # print(match_to_do)
+
         if not os.path.exists(features_filename):
             # print(subfolder)
             print(match_to_do)
@@ -18,9 +20,8 @@ def main(args):
             if not len(features.item().keys()) == 3:
                 # print('old features')
                 print(match_to_do)
-        #     pass
-        # else:
-        #     print(subfolder)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

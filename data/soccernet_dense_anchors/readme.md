@@ -30,6 +30,13 @@ This generates a sample script that converts all of the Soccernet videos.
     --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference > \
     data/soccernet_inference/convert_video_to_lower_resolution_for_inference.sh
 
+Need to sample down for inference on whole matches
+    python data/soccernet_inference/convert_video_to_lower_resolution_for_inference.py \
+    --input_folder /mnt/big/multimodal_sports/SoccerNet_HQ/raw_data \
+    --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_5fps \
+    --fps 5 > \
+    data/soccernet_inference/convert_video_to_lower_resolution_for_inference_5fps.sh
+
 ## Parallelize resolution conversion
 
 Each 45 min video files takes about 10 min to convert to lower resolution. So we parallelize to 100 such jobs.
@@ -39,13 +46,26 @@ Each 45 min video files takes about 10 min to convert to lower resolution. So we
     sed -n ${i}~100p data/soccernet_inference/convert_video_to_lower_resolution_for_inference.sh > data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.sh;
     done
 
+    for i in {0..199};
+    do
+    sed -n ${i}~100p data/soccernet_inference/convert_video_to_lower_resolution_for_inference_5fps.sh > data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.sh;
+    done
+
 Run the parallel jobs on a cluster, slurm based for example.
 
-    for i in {0..99};
+    for i in {0..199};
     do
     sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
     "echo no | bash data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.sh" \
     --output="data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.log"
+    done
+
+Check job status
+
+    for i in {0..199};
+    do
+    echo $i
+    cat data/soccernet_inference/convert_video_to_lower_resolution_for_inference_parallel/${i}.log | tail -n 1
     done
 
 # Train command
@@ -57,6 +77,12 @@ Run the parallel jobs on a cluster, slurm based for example.
     python data/soccernet_dense_anchors/generate_whole_video_inference_jsons.py \
     --videos_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference \
     --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists
+
+
+    python data/soccernet_dense_anchors/generate_whole_video_inference_jsons.py \
+    --fps 5 \
+    --videos_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_5fps \
+    --output_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps
 
 ## Sample inference command
 
@@ -71,6 +97,27 @@ Run the parallel jobs on a cluster, slurm based for example.
 
     python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG 
 
+## Run all inference (Needed to sample down to 5fps because of our scale to run all Soccernet data)
+
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*;
+do 
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+
+echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+--output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done
+
+## Find unfinished jobs
+python data/soccernet_dense_anchors/check_unfinished_inference.py \
+--inference_root /mnt/storage/gait-0/xin/soccernet_features
 # List of changed files and corresponding changes.
 
 - Label files processing are changed and labels of category and event_times are composed into dicts to send into the pipeline. Class names are added into the init.
@@ -419,23 +466,43 @@ array({'features': array([[[-0.11292514, -0.1312699 ,  0.07413186, ..., -0.03451
 /mnt/storage/gait-0/xin/soccernet_features
 
 
+# Inference with 5fps
 
-CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
 INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
 
-for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/*; 
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
 do 
 line=`basename "$FILE" .mkv`
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
-echo "sbatch -p TitanXx8_mlong,TitanXx8_slong,2080Ti_mlong,1080Ti_slong,1080Ti_mlong,1080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
+echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
 --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
 --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done > unfinished_inference.sh
+
+
+## Check results
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+do 
+line=`basename "$FILE" .mkv`
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+log_file=/mnt/storage/gait-0/xin//logs/$line.log
+echo $log_file
+tail -n 1 /mnt/storage/gait-0/xin//logs/$line.log
+tail -n 1 /mnt/storage/gait-0/xin//logs/$line/workerlog.0
 done
-
-
+#
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
@@ -447,11 +514,53 @@ do
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
-
-echo "sbatch -p 1080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+echo "sbatch -p 1080Ti,2080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
 --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
 --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
 done
+
+Testing to see if we are putting to many jobs on one machine and using up memory. (or issue with shared memory)
+
+# Rerun Unfinished 5ps inference
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+
+cat inference_matches_todo.txt | while read line 
+do 
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+
+echo "sbatch -p 1080Ti,2080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+--output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done
+
+
+# Single card inference command
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+
+cat inference_matches_todo.txt | while read line 
+do 
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+echo "sbatch -p 1080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap \"export CUDA_VISIBLE_DEVICES=0; python3.7 main.py --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+--output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done
+
+
+
+         #指定使用的GPU显卡id
+python3.7 main.py  --validate -c configs_path/your_config.yaml
 
 1080Ti
 watch tail -n 20 /mnt/storage/gait-0/xin//logs/germany_bundesliga.2016-2017.2016-10-22_-_16-30_Ingolstadt_3_-_3_Dortmund.2_LQ.log
@@ -466,3 +575,9 @@ watch tail -n 20 /mnt/storage/gait-0/xin//logs/england_epl.2014-2015.2015-02-21_
 watch tail -n 20 /mnt/storage/gait-0/xin//logs/england_epl.2014-2015.2015-02-21_-_18-00_Chelsea_1_-_1_Burnley.2_LQ/workerlog.0
 
 python data/soccernet_dense_anchors/check_unfinished_inference.py
+
+
+/mnt/storage/gait-0/xin//logs/spain_laliga.2015-2016.2016-04-02_-_21-30_Barcelona_1_-_2_Real_Madrid.2_LQ/workerlog.0
+
+
+/mnt/storage/gait-0/xin//logs/germany_bundesliga.2015-2016.2016-04-16_-_19-30_Bayern_Munich_3_-_0_Schalke.1_LQ/workerlog.0
