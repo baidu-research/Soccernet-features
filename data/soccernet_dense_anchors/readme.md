@@ -97,8 +97,9 @@ Check job status
 
     python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG 
 
-## Run all inference (Needed to sample down to 5fps because of our scale to run all Soccernet data)
+## Run all inference 
 
+Needed to sample down to 5fps because of our scale to run all Soccernet data
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
@@ -118,6 +119,7 @@ done
 ## Find unfinished jobs
 python data/soccernet_dense_anchors/check_unfinished_inference.py \
 --inference_root /mnt/storage/gait-0/xin/soccernet_features
+
 # List of changed files and corresponding changes.
 
 - Label files processing are changed and labels of category and event_times are composed into dicts to send into the pipeline. Class names are added into the init.
@@ -466,7 +468,7 @@ array({'features': array([[[-0.11292514, -0.1312699 ,  0.07413186, ..., -0.03451
 /mnt/storage/gait-0/xin/soccernet_features
 
 
-# Inference with 5fps
+## All Inference with 5fps
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
@@ -485,7 +487,7 @@ echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
 done > unfinished_inference.sh
 
 
-## Check results
+## Check inference logs
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
@@ -502,7 +504,26 @@ echo $log_file
 tail -n 1 /mnt/storage/gait-0/xin//logs/$line.log
 tail -n 1 /mnt/storage/gait-0/xin//logs/$line/workerlog.0
 done
-#
+
+# Rerun Unfinished 5ps inference
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+
+
+cat inference_matches_todo.txt | while read line 
+do 
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
+--wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+--output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+done > unfinished_inference.sh
+
+
+# Rerun unfinished full fps
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
@@ -519,25 +540,9 @@ echo "sbatch -p 1080Ti,2080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
 --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
 done
 
-Testing to see if we are putting to many jobs on one machine and using up memory. (or issue with shared memory)
-
-# Rerun Unfinished 5ps inference
-
-CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
-INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
 
 
-cat inference_matches_todo.txt | while read line 
-do 
-INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
-INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
-
-echo "sbatch -p 1080Ti,2080Ti,TitanXx8 --gres=gpu:1 --cpus-per-task 4 -n 1  \
---wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
---output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
-done
 
 
 # Single card inference command
@@ -581,3 +586,24 @@ python data/soccernet_dense_anchors/check_unfinished_inference.py
 
 
 /mnt/storage/gait-0/xin//logs/germany_bundesliga.2015-2016.2016-04-16_-_19-30_Bayern_Munich_3_-_0_Schalke.1_LQ/workerlog.0
+
+
+
+grep -B 10 -A 10 --color 'Goal' "/mnt/big/multimodal_sports/soccer/SoccerNetv2/spain_laliga/2016-2017/2017-05-21 - 21-00 Malaga 0 - 2 Real Madrid/Labels-v2.json" 
+
+
+cat labels.txt | while read line
+do
+echo $line
+grep -B 10 -A 10 --color 'Goal' "$line"
+done
+
+
+
+rsync -a xin@asimov-0-log.svail.baidu.com:"/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/italy_serie-a/2016-2017/2016-11-20\ -\ 22-45\ AC\ Milan\ 2\ -\ 2\ Inter/" ~/Downloads
+
+
+rsync -a xin@asimov-0-log.svail.baidu.com:"/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/spain_laliga/2015-2016/2016-04-02\ -\ 21-30\ Barcelona\ 1\ -\ 2\ Real\ Madrid" "/Users/zhouxin16/Downloads/2016-04-02 - 21-30 Barcelona 1 - 2 Real Madrid"
+
+
+rsync -a xin@asimov-0-log.svail.baidu.com:"/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/england_epl/2016-2017/2017-01-15\ -\ 19-00\ Manchester\ United\ 1\ -\ 1\ Liverpool" "/Users/zhouxin16/Downloads/2017-01-15 - 19-00 Manchester United 1 - 1 Liverpool"
