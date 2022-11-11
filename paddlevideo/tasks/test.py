@@ -22,6 +22,8 @@ from ..modeling.builder import build_model
 
 logger = get_logger("paddlevideo")
 
+import cv2
+
 
 # @paddle.no_grad()
 # def test_model(cfg, weights, parallel=True):
@@ -176,6 +178,8 @@ def test_model(cfg, weights, parallel=True):
                     cls_score_all = np.stack(accumulated_features['cls_score'])
                     event_times_all = np.stack(accumulated_features['event_times'])
                     save_dict = {'cls_score_all': cls_score_all, 'event_times': event_times_all}
+                    if not os.path.exists(cfg.inference_dir):
+                        os.makedirs(cfg.inference_dir, exist_ok = True)
                     features_file = os.path.join(cfg.inference_dir, 'features.npy')
                     np.save(features_file, save_dict)
                     print('Wrote', features_file, 'cls_score_all', cls_score_all.shape, 'event_times_all', event_times_all.shape)
@@ -191,11 +195,25 @@ def test_model(cfg, weights, parallel=True):
                 accumulated_features['event_times'].append(np.array(event_times, dtype = np.float32))
                 accumulated_features['features'].append(np.array(features, dtype = np.float32))
 
+                if not os.path.exists(cfg.inference_dir):
+                    os.makedirs(cfg.inference_dir, exist_ok = True)
+                images = np.array(data['imgs'])[0]
+                images = np.moveaxis(images, [1, 2, 3], [0, 1, 2])
+                for i in range(images.shape[0]):
+                    image = images[i] * 255
+                    img_name = os.path.join(cfg.inference_dir, f'{batch_id}_{i}.png')
+                    cv2.imwrite(img_name, image.astype(int))
+                    print('wrote', img_name)
+
                 if batch_id == len(data_loader) - 1: #last one need to save
+                # if batch_id == 5: #last one need to save
+                #     import ipdb; ipdb.set_trace()
                     cls_score_all = np.stack(accumulated_features['cls_score'])
                     event_times_all = np.stack(accumulated_features['event_times'])
                     features_all = np.stack(accumulated_features['features'])
                     save_dict = {'cls_score_all': cls_score_all, 'event_times': event_times_all, 'features': features_all}
+                    if not os.path.exists(cfg.inference_dir):
+                        os.makedirs(cfg.inference_dir, exist_ok = True)
                     features_file = os.path.join(cfg.inference_dir, 'features.npy')
                     np.save(features_file, save_dict)
                     print('Wrote', features_file, 'cls_score_all', cls_score_all.shape, 'event_times_all', event_times_all.shape, 'features_all', features_all.shape)
@@ -209,6 +227,8 @@ def test_model(cfg, weights, parallel=True):
                 if batch_id == len(data_loader) - 1: #last one need to save
                     features = np.stack(accumulated_features['features'])
                     save_dict = {'features': features}
+                    if not os.path.exists(cfg.inference_dir):
+                        os.makedirs(cfg.inference_dir, exist_ok = True)
                     features_file = os.path.join(cfg.inference_dir, 'features.npy')
                     np.save(features_file, save_dict)
                     print('Wrote', features_file, 'features', features.shape)

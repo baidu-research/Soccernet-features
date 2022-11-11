@@ -19,6 +19,8 @@ Split into train, val, test
     --clips_folder ./ \
     --mode json
 
+generates files like train.dense.list in dense mode.
+
 # Inference on whole video files
 
 ## Convert video input into lower resolution
@@ -472,7 +474,7 @@ array({'features': array([[[-0.11292514, -0.1312699 ,  0.07413186, ..., -0.03451
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
-INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_2_0_threads
 
 for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
 do 
@@ -501,8 +503,8 @@ INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
 log_file=/mnt/storage/gait-0/xin//logs/$line.log
 echo $log_file
-tail -n 1 /mnt/storage/gait-0/xin//logs/$line.log
-tail -n 1 /mnt/storage/gait-0/xin//logs/$line/workerlog.0
+tail -n 2 /mnt/storage/gait-0/xin//logs/$line.log
+tail -n 2 /mnt/storage/gait-0/xin//logs/$line/workerlog.0
 done
 
 # Rerun Unfinished 5ps inference
@@ -607,3 +609,44 @@ rsync -a xin@asimov-0-log.svail.baidu.com:"/mnt/big/multimodal_sports/SoccerNet_
 
 
 rsync -a xin@asimov-0-log.svail.baidu.com:"/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/england_epl/2016-2017/2017-01-15\ -\ 19-00\ Manchester\ United\ 1\ -\ 1\ Liverpool" "/Users/zhouxin16/Downloads/2017-01-15 - 19-00 Manchester United 1 - 1 Liverpool"
+
+
+
+
+
+CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_debug
+line=spain_laliga.2014-2015.2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona.1_LQ
+INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/debug_spain_laliga.2014-2015.2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona.1_LQ  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG
+
+
+The sampler is not thread safe, cannot use multiple workers
+less than 2 hours per file
+doesn't each thread have its own?
+
+maybe we need to add data to test one file
+
+try initial model
+
+
+python data/soccernet_dense_anchors/check_unfinished_inference.py \
+--inference_root /mnt/storage/gait-0/xin/soccernet_features_2_0_threads
+
+
+
+
+Average mAP:  0.008546825782252895
+Average mAP per class:  [0.0006031103177731429, 0.007023355787837999, 0.004442226162267486, 0.007612015409374928, 0.005620470478412588, 0.0, 0.0, 0.022223125653777934, 0.0, 0.05157126489204886, 0.03267476204242374, 0.0, 0.0, 0.01352570755438252, 0.0, 0.0, 0.0]
+Average mAP visible:  0.009282596566468881
+Average mAP visible per class:  [0.0031938021994840178, 0.007982699414182792, 0.005258245756984297, 0.012869323746530091, 0.006747150789788531, 0.0, 0.0, 0.022631286871877432, 0.0, 0.052886391047441084, 0.032617970864093654, 0.0, 0.0, 0.013617270939589114, 0.0, 0.0, 0.0]
+Average mAP unshown:  0.01031475940999797
+Average mAP unshown per class:  [0.0, 0.006847089780842783, 0.0, 0.0024225147560411023, 0.0014923403066344537, 0.0, 0.0, 0.022276967845364672, 0.0, 0.04858405039850779, 0.038938832612243846, 0.0, 0.0, 0.013530076630338976, 0.0, 0.0, 0.0]
+
+
+rsync -a xin@asimov-0-log.svail.baidu.com:/mnt/storage/gait-0/xin/soccernet_features_debug/spain_laliga.2014-2015.2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona.1_LQ/ /Users/zhouxin16/Downloads/soccernet_features_debug
+
+rsync -a xin@asimov-0-log.svail.baidu.com:/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_5fps/spain_laliga.2014-2015.2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona.1_LQ.mkv /Users/zhouxin16/Downloads/soccernet_features_debug

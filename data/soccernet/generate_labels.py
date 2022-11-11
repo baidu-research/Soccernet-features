@@ -59,16 +59,17 @@ def main(args):
         # print(filename)
         if label_v2['UrlLocal'] is None:
             continue
+        video_local_folder = os.path.join(args.raw_videos_root, label_v2['UrlLocal'])
         video_filenames = [
-            os.path.join(os.path.join(args.raw_videos_root, label_v2['UrlLocal']), '1_HQ.mkv'),
-            os.path.join(os.path.join(args.raw_videos_root, label_v2['UrlLocal']), '2_HQ.mkv')]
+            os.path.join(video_local_folder, '1_HQ.mkv'),
+            os.path.join(video_local_folder, '2_HQ.mkv')]
 
         durations = [video_duration(video_filenames[0]),video_duration(video_filenames[1])]
 
-        # videos_starts_filename = os.path.join(args.video_root, label_v2['UrlLocal']) + '/video.ini'
+        videos_starts_filename = os.path.join(video_local_folder, 'video.ini')
 
-        # with open(videos_starts_filename, 'r') as f:
-            # lines = f.readlines()
+        with open(videos_starts_filename, 'r') as g:
+            lines = g.readlines()
             # get video_ini
             # "/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/spain_laliga/2014-2015/2015-02-14 - 20-00 Real Madrid 2 - 0 Dep. La Coruna/video.ini"
             # sample
@@ -78,9 +79,7 @@ def main(args):
             # [2_HQ.mkv]
             # start_time_second = 52
 
-            # game_start_secs_in_videos = [
-            #     parse_gamestart_secs_line(lines[1]),
-            #     parse_gamestart_secs_line(lines[4])]
+        game_start_secs_in_videos = [parse_gamestart_secs_line(lines[1]), parse_gamestart_secs_line(lines[4])]
 
         # {"path": "/mnt/scratch/xin/datatang_stage123/stage1/converted/398x224_fps25/acm.v.int.1.serieA.21.09.2019.fullmatch.net_17m20s-18m40s.mp4", 
         # "clip_length": 80, "annotations": [{"label": "\u5c04\u95e8", "event_time": 46.0}, {"label": "\u5c04\u95e8", "event_time": 66.0}]}
@@ -155,7 +154,7 @@ def main(args):
             game_half_index = int(annotation['gameTime'].split('-')[0]) - 1 # convert 1, 2 to 0, 1
             game_time_str = annotation['gameTime'].split('-')[1]
             game_time_secs = int(game_time_str.split(':')[0]) * 60 + int(game_time_str.split(':')[1])
-            event_time_game_half_video = game_time_secs
+            event_time_game_half_video = game_time_secs + game_start_secs_in_videos[game_half_index] # offset gametime with gamestart secs in video read from the video_ini file
             
             game_time_secs_index = event_time_game_half_video // args.clip_length
             for json_index in [-1, game_time_secs_index - 1, game_time_secs_index, game_time_secs_index + 1]:
@@ -190,10 +189,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--raw_videos_root', type=str, default = '/home/zhangyuxuan07/PaddleSports/SoccerData/smallsetofdata')
-    parser.add_argument('--labels_root', type=str, default = '/home/zhangyuxuan07/PaddleSports/SoccerData/smallsetofdatalabel')
-    parser.add_argument('--clips_folder', type=str, default = '/home/zhangyuxuan07/PaddleSports/SoccerData/output/video_clips')
-    # parser.add_argument('--output_folder', type=str, default = '/home/zhangyuxuan07/PaddleSports/SoccerData/output/annotations')
+    parser.add_argument('--raw_videos_root', type=str, required = True)	
+    parser.add_argument('--labels_root', type=str, required = True)	
+    parser.add_argument('--clips_folder', type=str, required = True)
     parser.add_argument('--clip_length', type=int, default = 10)
     parser.add_argument('--extension', type=str, default = 'mp4')
 

@@ -10,7 +10,7 @@ from tqdm import tqdm
 nms_window_size = 15
 
 soccernet_path = '/mnt/data/zhiyu/SoccerNetv2_features/'
-features_root = '/mnt/storage/gait-0/xin/soccernet_features/'
+features_root = '/mnt/storage/gait-0/xin/soccernet_features_2_0_threads/'
 result_jsons_root = '/mnt/storage/gait-0/xin/soccernet_features_result_jsons/'
 
 k_labels_mapping_file = 'label_mapping.dense.txt'
@@ -24,7 +24,6 @@ with open(k_labels_mapping_file, 'r') as f:
 # Sample labels file /mnt/data/zhiyu/SoccerNetv2_features/spain_laliga/2016-2017/2017-05-21 - 21-00 Malaga 0 - 2 Real Madrid/Labels-v2.json
 
 def get_spot_from_NMS(Input, window=15, thresh=0.0):
-
     detections_tmp = np.copy(Input)
     indexes = []
     MaxValues = []
@@ -148,7 +147,7 @@ for label_filename in tqdm(label_filenames_all):
 
 results =  evaluate(SoccerNet_path=soccernet_path, 
                 Predictions_path=result_jsons_root,
-                split="test",
+                split="validation",
                 prediction_file="results_spotting.json", 
                 version=2)
 

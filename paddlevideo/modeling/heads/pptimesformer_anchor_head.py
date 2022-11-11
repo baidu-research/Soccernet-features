@@ -41,6 +41,7 @@ class ppTimeSformerAnchorHead(BaseHead):
                  std=0.02,
                  output_mode = None,
                  event_time_loss_weight = 1.0,
+                 fc_lr_multiplier = 1.0,
                  events_lr_multiplier = 1.0,
                  **kwargs):
 
@@ -50,7 +51,7 @@ class ppTimeSformerAnchorHead(BaseHead):
         self.event_time_loss_weight = event_time_loss_weight
         self.fc = Linear(self.in_channels,
                          self.num_classes,
-                         bias_attr=ParamAttr(regularizer=L2Decay(0.0)))
+                         bias_attr=ParamAttr(regularizer=L2Decay(0.0), learning_rate = fc_lr_multiplier))
 
         self.fc_event_times = Linear(
             self.in_channels,
