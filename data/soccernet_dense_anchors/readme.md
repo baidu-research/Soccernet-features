@@ -473,8 +473,8 @@ array({'features': array([[[-0.11292514, -0.1312699 ,  0.07413186, ..., -0.03451
 ## All Inference with 5fps
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
-INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_2_0_threads
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_10/ppTimeSformer_dense_event_lr_100_fc_lr_10_epoch_00006.pdparams
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_3_game_start_offset
 
 for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
 do 
@@ -488,6 +488,8 @@ echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
 --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
 done > unfinished_inference.sh
 
+
+starting from 9707087
 
 ## Check inference logs
 
@@ -650,3 +652,20 @@ Average mAP unshown per class:  [0.0, 0.006847089780842783, 0.0, 0.0024225147560
 rsync -a xin@asimov-0-log.svail.baidu.com:/mnt/storage/gait-0/xin/soccernet_features_debug/spain_laliga.2014-2015.2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona.1_LQ/ /Users/zhouxin16/Downloads/soccernet_features_debug
 
 rsync -a xin@asimov-0-log.svail.baidu.com:/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_5fps/spain_laliga.2014-2015.2015-04-25_-_17-00_Espanyol_0_-_2_Barcelona.1_LQ.mkv /Users/zhouxin16/Downloads/soccernet_features_debug
+
+looks like '/mnt/data/kangle/datasets/SoccerNetv2_features/england_epl/2014-2015/2015-04-11 - 19-30 Burnley 0 - 1 Arsenal/1.mkv' is low resolution and is offset by gamestart
+
+/mnt/data/kangle/datasets/SoccerNetv2_features/england_epl/2014-2015/2015-04-11 - 19-30 Burnley 0 - 1 Arsenal/1_ResNET_TF2.npy
+
+
+a.shape
+(5399, 2048)
+
+original video HQ 3882
+1.mkv       DURATION        : 00:45:00.003000000 2700
+
+
+/mnt/data/kangle/datasets/SoccerNetv2_features/england_epl/2014-2015/2015-04-11 - 19-30 Burnley 0 - 1 Arsenal/1_TPNs0_1fps.npy 
+(2700, 2048)
+
+inference has to be done on low quality

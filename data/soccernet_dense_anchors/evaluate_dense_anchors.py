@@ -23,6 +23,17 @@ with open(k_labels_mapping_file, 'r') as f:
 
 # Sample labels file /mnt/data/zhiyu/SoccerNetv2_features/spain_laliga/2016-2017/2017-05-21 - 21-00 Malaga 0 - 2 Real Madrid/Labels-v2.json
 
+def parse_gamestart_secs_line(line):
+    # get video_ini
+    # "/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/spain_laliga/2014-2015/2015-02-14 - 20-00 Real Madrid 2 - 0 Dep. La Coruna/video.ini"
+    # sample
+    # [1_HQ.mkv]
+    # start_time_second = 67
+
+    # [2_HQ.mkv]
+    # start_time_second = 52
+    return int(line.split('=')[-1])
+
 def get_spot_from_NMS(Input, window=15, thresh=0.0):
     detections_tmp = np.copy(Input)
     indexes = []
@@ -52,6 +63,16 @@ for label_filename in tqdm(label_filenames_all):
     parts = label_filename.split('/')
     url_local = '/'.join(parts[-4:-1])
     features_shortname = '.'.join(parts[-4:-1]).replace(" ", "_")
+
+    # get video_ini
+
+    # remove the front of the features
+    videos_starts_filename = label_filename.replace(k_label_filename, 'video.ini')
+    with open(videos_starts_filename, 'r') as g:
+        lines = g.readlines()
+
+    game_start_secs_in_videos = [parse_gamestart_secs_line(lines[1]), parse_gamestart_secs_line(lines[4])]
+
     # feature_folder needs to be changed
     detection_results_json = {}
     detection_results_json['UrlLocal'] = url_local
@@ -71,7 +92,7 @@ for label_filename in tqdm(label_filenames_all):
             continue
 
         features = np.load(features_filename, allow_pickle = True)
-
+        backbone_features = features['features']
         # print(features.item().keys())
 
         cls_score = expit(features.item()['cls_score_all'])
@@ -80,6 +101,7 @@ for label_filename in tqdm(label_filenames_all):
         if len(cls_score.shape) == 3:
             cls_score = np.squeeze(cls_score, axis = 1)
             event_times = np.squeeze(event_times, axis = 1)
+            backbone_features = np.squeeze(backbone_features, axis = 1)
 
         cls_score = softmax(cls_score, axis = 0)
 
@@ -92,9 +114,19 @@ for label_filename in tqdm(label_filenames_all):
         original_fps = 1
         target_fps = 5
 
+        # offset by gamestart
+        half_index = half - 1
+        backbone_features = features['features'][game_start_secs_in_videos[half_index] * original_fps:,:]
+        cls_score = cls_score[game_start_secs_in_videos[half_index] * original_fps:,:]
+        event_times = event_times[game_start_secs_in_videos[half_index] * original_fps:,:]
+
+        features_trimmed_filename = os.path.join(feature_folder, 'features.trimmed.npy')
+        with open(features_trimmed_filename, 'wb') as trimmed_file:
+            np.save(trimmed_file, {'features': backbone_features, 'cls_score': cls_score, 'event_times': event_times})
+
         probability_array = np.zeros((int(cls_score.shape[0] / original_fps) * target_fps, cls_score.shape[1])) - 1
 
-        # print(probability_array.shape)
+        print(probability_array.shape)
         # last one is background?
 
         for time_step in range(cls_score.shape[0]):
