@@ -669,3 +669,6 @@ original video HQ 3882
 (2700, 2048)
 
 inference has to be done on low quality
+
+
+/mnt/storage/gait-0/xin/soccernet_features_3_game_start_offset/england_epl.2014-2015.2015-02-21_-_18-00_Chelsea_1_-_1_Burnley.1_LQ

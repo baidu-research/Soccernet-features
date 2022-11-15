@@ -197,13 +197,15 @@ def test_model(cfg, weights, parallel=True):
 
                 if not os.path.exists(cfg.inference_dir):
                     os.makedirs(cfg.inference_dir, exist_ok = True)
-                images = np.array(data['imgs'])[0]
-                images = np.moveaxis(images, [1, 2, 3], [0, 1, 2])
-                for i in range(images.shape[0]):
-                    image = images[i] * 255
-                    img_name = os.path.join(cfg.inference_dir, f'{batch_id}_{i}.png')
-                    cv2.imwrite(img_name, image.astype(int))
-                    print('wrote', img_name)
+                
+                # write images to see hwt images are used for inference
+                # images = np.array(data['imgs'])[0]
+                # images = np.moveaxis(images, [1, 2, 3], [0, 1, 2])
+                # for i in range(images.shape[0]):
+                    # image = images[i] * 255
+                    # img_name = os.path.join(cfg.inference_dir, f'{batch_id}_{i}.png')
+                    # cv2.imwrite(img_name, image.astype(int))
+                    # print('wrote', img_name)
 
                 if batch_id == len(data_loader) - 1: #last one need to save
                 # if batch_id == 5: #last one need to save

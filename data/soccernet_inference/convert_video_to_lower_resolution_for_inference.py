@@ -24,22 +24,35 @@ def main(args):
     # import ipdb;ipdb.set_trace()
 
     for filename in files:
-        # videos_starts_filename = label_filename.replace(k_label_filename, 'video.ini')
-        # with open(videos_starts_filename, 'r') as g:
-        #     lines = g.readlines()
+        match_folder = os.path.dirname(filename)
+        videos_starts_filename = os.path.join(match_folder, 'video.ini')
 
-        # game_start_secs_in_videos = [parse_gamestart_secs_line(lines[1]), parse_gamestart_secs_line(lines[4])]
+        with open(videos_starts_filename, 'r') as g:
+            lines = g.readlines()
+        game_start_secs_in_videos = [parse_gamestart_secs_line(lines[1]), parse_gamestart_secs_line(lines[4])]
+
+        game_half = os.path.basename(filename).split('_')[0]
+        game_half_index = int(game_half) - 1
+        # offset and 45 min
+
+        game_start_secs = game_start_secs_in_videos[game_half_index]
+        # game_end_secs = game_start_secs + 45 * 60
         
-
         # make necessary folders
         parts = filename.split('/')
         new_shortname_root = '.'.join(parts[-4:])
         new_filename = os.path.join(args.output_folder, new_shortname_root).replace(" ", "_").replace('HQ', 'LQ')
         
-        if args.fps > 0:
-            command = f'ffmpeg -i "{filename}" -vf "scale=456x256,fps={args.fps}" -map 0:v -c:v libx264 "{new_filename}" -y'
+        if args.trim_to_gametime:
+            if args.fps > 0:
+                command = f'ffmpeg -ss {game_start_secs} -i "{filename}" -vf "scale=456x256,fps={args.fps}" -map 0:v -c:v libx264 -strict experimental "{new_filename}" -y'
+            else:
+                command = f'ffmpeg -ss {game_start_secs} -i "{filename}" -vf scale=456x256 -map 0:v -c:v libx264 -c:a aac -strict experimental "{new_filename}"'            
         else:
-            command = f'ffmpeg -i "{filename}" -vf scale=456x256 -map 0:v -c:v libx264 -c:a aac "{new_filename}"'
+            if args.fps > 0:
+                command = f'ffmpeg -i "{filename}" -vf "scale=456x256,fps={args.fps}" -map 0:v -c:v libx264 "{new_filename}" -y'
+            else:
+                command = f'ffmpeg -i "{filename}" -vf scale=456x256 -map 0:v -c:v libx264 -c:a aac "{new_filename}"'
 
         print(command)
 
@@ -49,6 +62,10 @@ if __name__ == "__main__":
     parser.add_argument('--output_folder', type=str, default = '/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference')
     parser.add_argument('--fps', type=int, default = -1)
     parser.add_argument('--extension', type=str, default = 'mkv')
+
+    parser.add_argument('--trim_to_gametime', dest='trim_to_gametime', action='store_true')
+    parser.add_argument('--no-trim_to_gametime', dest='trim_to_gametime', action='store_false')
+    parser.set_defaults(trim_to_gametime=False)
 
 
     args = parser.parse_args()

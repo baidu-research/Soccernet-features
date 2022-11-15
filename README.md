@@ -103,7 +103,7 @@ Then you will have train.list, val.list, test.list in this folder.
 
 ## Convert video input into lower resolution
 
-This generates a sample script that converts all of the Soccernet videos.
+This generates a sample script that converts all of the Soccernet videos. We have to be a little bit careful with if the video starts from gamestart or not. (trim_to_gametime)
 
     python data/soccernet_inference/convert_video_to_lower_resolution_for_inference.py \
     --input_folder /mnt/big/multimodal_sports/SoccerNet_HQ/raw_data \

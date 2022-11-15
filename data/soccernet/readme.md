@@ -57,7 +57,12 @@ python data/soccernet/labels_to_pdvideo_format.py \
 # split annotations into train val test
 python data/soccernet/split_annotation_into_train_val_test.py \
 --annotation_file /mnt/storage/gait-0/xin/dataset/soccernet_456x256/annotation.txt \
---clips_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256
+--clips_folder /mnt/storage/gait-0/xin/dataset/soccernet_456x256 \
+--mode text
+
+cp /mnt/storage/gait-0/xin/dataset/soccernet_456x256/train.list .
+cp /mnt/storage/gait-0/xin/dataset/soccernet_456x256/val.list .
+cp /mnt/storage/gait-0/xin/dataset/soccernet_456x256/test.list .
 
 # pretrained: "pretrained_weights/SwinTransformer_imagenet.pdparams" 
 

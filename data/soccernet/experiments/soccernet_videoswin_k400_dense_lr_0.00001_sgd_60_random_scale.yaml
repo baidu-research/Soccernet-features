@@ -30,7 +30,7 @@ MODEL: #MODEL field
 
 DATASET: #DATASET field
     batch_size: 5 #Mandatory, bacth size
-    num_workers: 0 #Mandatory, XXX the number of subprocess on each GPU.
+    num_workers: 5 #Mandatory, XXX the number of subprocess on each GPU.
     test_batch_size: 1
     train:
         format: "VideoDenseAnchorsDataset" #Mandatory, indicate the type of dataset, associate to the 'paddlevidel/loader/dateset'

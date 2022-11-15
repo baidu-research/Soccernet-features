@@ -10,7 +10,8 @@ from tqdm import tqdm
 nms_window_size = 15
 
 soccernet_path = '/mnt/data/zhiyu/SoccerNetv2_features/'
-features_root = '/mnt/storage/gait-0/xin/soccernet_features_2_0_threads/'
+video_ini_root = '/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/'
+features_root = '/mnt/storage/gait-0/xin/soccernet_features_3_game_start_offset/'
 result_jsons_root = '/mnt/storage/gait-0/xin/soccernet_features_result_jsons/'
 
 k_labels_mapping_file = 'label_mapping.dense.txt'
@@ -52,134 +53,145 @@ def get_spot_from_NMS(Input, window=15, thresh=0.0):
     
     return indexes, MaxValues
 
-k_label_filename = 'Labels-v2.json'
-label_filenames_all = glob.glob(os.path.join(soccernet_path, f'**/{k_label_filename}'), recursive = True)
+def compute_nms():
+    k_label_filename = 'Labels-v2.json'
+    label_filenames_all = glob.glob(os.path.join(soccernet_path, f'**/{k_label_filename}'), recursive = True)
 
-for label_filename in tqdm(label_filenames_all):
-    # video files here # /mnt/big/multimodal_sports/SoccerNet_HQ/raw_data
+    for label_filename in tqdm(label_filenames_all):
+        # video files here # /mnt/big/multimodal_sports/SoccerNet_HQ/raw_data
 
-    # 1st and 2nd half
+        # 1st and 2nd half
 
-    parts = label_filename.split('/')
-    url_local = '/'.join(parts[-4:-1])
-    features_shortname = '.'.join(parts[-4:-1]).replace(" ", "_")
+        parts = label_filename.split('/')
+        url_local = '/'.join(parts[-4:-1])
+        features_shortname = '.'.join(parts[-4:-1]).replace(" ", "_")
 
-    # get video_ini
+        # get video_ini
 
-    # remove the front of the features
-    videos_starts_filename = label_filename.replace(k_label_filename, 'video.ini')
-    with open(videos_starts_filename, 'r') as g:
-        lines = g.readlines()
-
-    game_start_secs_in_videos = [parse_gamestart_secs_line(lines[1]), parse_gamestart_secs_line(lines[4])]
-
-    # feature_folder needs to be changed
-    detection_results_json = {}
-    detection_results_json['UrlLocal'] = url_local
-    predictions = []
-
-    result_folder = label_filename.replace(k_label_filename, '').replace(soccernet_path, result_jsons_root)
-    # print(result_folder)
-    os.makedirs(result_folder, exist_ok=True)
-
-    for half in [1, 2]:
-        feature_folder = os.path.join(features_root, f'{features_shortname}.{half}_LQ').replace(" ", "_")
-        features_filename = os.path.join(feature_folder, 'features.npy')
-
-        # import ipdb; ipdb.set_trace()
-
-        if not os.path.exists(features_filename):
+        # remove the front of the features
+        videos_starts_filename = label_filename.replace(k_label_filename, 'video.ini').replace(soccernet_path, video_ini_root)
+        if not os.path.exists(videos_starts_filename):
             continue
 
-        features = np.load(features_filename, allow_pickle = True)
-        backbone_features = features['features']
-        # print(features.item().keys())
+        with open(videos_starts_filename, 'r') as g:
+            lines = g.readlines()
 
-        cls_score = expit(features.item()['cls_score_all'])
-        event_times = features.item()['event_times']
+        game_start_secs_in_videos = [parse_gamestart_secs_line(lines[1]), parse_gamestart_secs_line(lines[4])]
 
-        if len(cls_score.shape) == 3:
-            cls_score = np.squeeze(cls_score, axis = 1)
-            event_times = np.squeeze(event_times, axis = 1)
-            backbone_features = np.squeeze(backbone_features, axis = 1)
+        # feature_folder needs to be changed
+        detection_results_json = {}
+        detection_results_json['UrlLocal'] = url_local
+        predictions = []
 
-        cls_score = softmax(cls_score, axis = 0)
+        result_folder = label_filename.replace(k_label_filename, '').replace(soccernet_path, result_jsons_root)
+        # print(result_folder)
+        os.makedirs(result_folder, exist_ok=True)
 
-        # print(cls_score.shape, event_times.shape)
-        # print(cls_score[0])
-        # print(event_times[0])
+        for half in [1, 2]:
+            feature_folder = os.path.join(features_root, f'{features_shortname}.{half}_LQ').replace(" ", "_")
+            features_filename = os.path.join(feature_folder, 'features.npy')
 
-        # import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
 
-        original_fps = 1
-        target_fps = 5
-
-        # offset by gamestart
-        half_index = half - 1
-        backbone_features = features['features'][game_start_secs_in_videos[half_index] * original_fps:,:]
-        cls_score = cls_score[game_start_secs_in_videos[half_index] * original_fps:,:]
-        event_times = event_times[game_start_secs_in_videos[half_index] * original_fps:,:]
-
-        features_trimmed_filename = os.path.join(feature_folder, 'features.trimmed.npy')
-        with open(features_trimmed_filename, 'wb') as trimmed_file:
-            np.save(trimmed_file, {'features': backbone_features, 'cls_score': cls_score, 'event_times': event_times})
-
-        probability_array = np.zeros((int(cls_score.shape[0] / original_fps) * target_fps, cls_score.shape[1])) - 1
-
-        print(probability_array.shape)
-        # last one is background?
-
-        for time_step in range(cls_score.shape[0]):
-            for category in range(cls_score.shape[1]):
-                index_in_target = int(time_step * target_fps / original_fps + event_times[time_step, category])
-                probability_array[index_in_target][category] = max(
-                    cls_score[time_step, category], probability_array[index_in_target][category])
-
-        # print(probability_array[:50,])
-
-    # need softmax on cls_score
-
-
-        # indexes, MaxValues = get_spot_from_NMS(probability_array[:,0], window = int(15 * target_fps / original_fps))
-        # print(len(indexes))
-        # print(indexes[:10])
-        # print(MaxValues[:10])
-
-        # indexes, MaxValues = get_spot_from_NMS(probability_array[:,1], window = int(15 * target_fps / original_fps))
-        # print(indexes[:10])
-        # print(MaxValues[:10])
-
-        for label_index in range(len(label_index_to_category_map)):
-            label = label_index_to_category_map[label_index]
-            if label == 'background':
+            if not os.path.exists(features_filename):
                 continue
 
-            indexes, MaxValues = get_spot_from_NMS(probability_array[:,label_index], window = int(nms_window_size * target_fps / original_fps))
+            features = np.load(features_filename, allow_pickle = True)
+            # import ipdb; ipdb.set_trace()
+            backbone_features = features.item()['features']
+            # print(features.item().keys())
 
-            for i in range(len(indexes)):
-                time_step_index = indexes[i]
-                total_seconds = int(time_step_index  / (target_fps / original_fps))
-                minutes = int(total_seconds / 60)
-                seconds = total_seconds % 60
+            cls_score = expit(features.item()['cls_score_all'])
+            event_times = features.item()['event_times']
 
-                prediction = {
-                    "gametime": f'{half} - {minutes}:{seconds}',
-                    "label": label,
-                    "position": f'{total_seconds * 1000}',
-                    "half": f'{half}',
-                    "confidence": MaxValues[i]
-                }
+            if len(cls_score.shape) == 3:
+                cls_score = np.squeeze(cls_score, axis = 1)
+                event_times = np.squeeze(event_times, axis = 1)
+                backbone_features = np.squeeze(backbone_features, axis = 1)
 
-                predictions.append(prediction)
+            cls_score = softmax(cls_score, axis = 1)
+            # cls_score[1:] = softmax(cls_score[1:], axis = 1)
 
-    detection_results_json['predictions'] = predictions
-    result_filename = os.path.join(result_folder, 'results_spotting.json')
-    with open(result_filename, 'w') as f:
-        json.dump(detection_results_json, f)
+            # print(cls_score.shape, event_times.shape)
+            # print(cls_score[0])
+            # print(event_times[0])
+
+            # import ipdb; ipdb.set_trace()
+
+            original_fps = 1
+            target_fps = 5
+
+            # offset by gamestart
+            half_index = half - 1
+            feature_start = game_start_secs_in_videos[half_index] * original_fps
+            feature_end = feature_start + 45 * 60
+            backbone_features = backbone_features[feature_start: feature_end,:]
+            cls_score = cls_score[feature_start: feature_end,:]
+            event_times = event_times[feature_start: feature_end,:]
+
+            features_trimmed_filename = os.path.join(feature_folder, 'features.trimmed.npy')
+            with open(features_trimmed_filename, 'wb') as trimmed_file:
+                np.save(trimmed_file, {'features': backbone_features, 'cls_score': cls_score, 'event_times': event_times})
+
+            probability_array = np.zeros((int(cls_score.shape[0] / original_fps) * target_fps, cls_score.shape[1])) - 1
+
+            print(probability_array.shape)
+            # last one is background?
+
+            for time_step in range(cls_score.shape[0]):
+                for category in range(cls_score.shape[1]):
+                    # index_in_target = int(time_step * target_fps / original_fps + event_times[time_step, category])
+                    index_in_target = int(time_step * target_fps / original_fps)
+                    probability_array[index_in_target][category] = max(
+                        cls_score[time_step, category], probability_array[index_in_target][category])
+
+            # print(probability_array[:50,])
+
+        # need softmax on cls_score
+
+
+            # indexes, MaxValues = get_spot_from_NMS(probability_array[:,0], window = int(15 * target_fps / original_fps))
+            # print(len(indexes))
+            # print(indexes[:10])
+            # print(MaxValues[:10])
+
+            # indexes, MaxValues = get_spot_from_NMS(probability_array[:,1], window = int(15 * target_fps / original_fps))
+            # print(indexes[:10])
+            # print(MaxValues[:10])
+
+            for label_index in range(len(label_index_to_category_map)):
+                label = label_index_to_category_map[label_index]
+                if label == 'background':
+                    continue
+
+                indexes, MaxValues = get_spot_from_NMS(probability_array[:,label_index], window = int(nms_window_size * target_fps / original_fps))
+
+                for i in range(len(indexes)):
+                    time_step_index = indexes[i]
+                    total_seconds = int(time_step_index  / (target_fps / original_fps))
+                    minutes = int(total_seconds / 60)
+                    seconds = total_seconds % 60
+
+                    prediction = {
+                        "gametime": f'{half} - {minutes}:{seconds}',
+                        "label": label,
+                        "position": f'{total_seconds * 1000}',
+                        "half": f'{half}',
+                        "confidence": MaxValues[i]
+                    }
+
+                    predictions.append(prediction)
+
+        detection_results_json['predictions'] = predictions
+        result_filename = os.path.join(result_folder, 'results_spotting.json')
+        with open(result_filename, 'w') as f:
+            json.dump(detection_results_json, f)
+
+# compute_nms()
 
 results =  evaluate(SoccerNet_path=soccernet_path, 
                 Predictions_path=result_jsons_root,
-                split="validation",
+                split="valid",
                 prediction_file="results_spotting.json", 
                 version=2)
 
