@@ -99,6 +99,10 @@ def main(args):
             for start in range(0, int(duration), args.clip_length):
                 if start + args.clip_length > duration:
                     break
+
+                if start < game_start_secs_in_videos[game_half_index]:
+                    continue
+
                 if start == 0:
                     effective_start = 0
                 else:

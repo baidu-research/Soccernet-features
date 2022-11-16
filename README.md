@@ -14,7 +14,7 @@ This other [repo](https://github.com/baidu-research/vidpress-sports) contains th
 
 In this section, we will be extracting short 10 seconds clips from the Soccernet videos and the clips will have a lower resolution for training.
 
-Download raw HQ video data from the [Soccernet official website](https://www.soccer-net.org/download). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder.
+Download raw HQ video data from the [Soccernet official website](https://www.soccer-net.org/download). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder. (There are 3 resolutions, 1080p, 720p, 224p. The 720p, 224p videos are all cut from gamestart to end whistle.)
 
 Run the following command. The output is commands to extract the clips. Redirect the output into a file because there are many extraction commands and you will need to split the file to run the commands in parallel. Choose a folder and set the environment variable $CLIPS_FOLDER to save your clips.
 
@@ -100,6 +100,8 @@ Then you will have train.list, val.list, test.list in this folder.
     TODO
 
 # Inference on whole video files
+
+Could be convenient to consider gamestart.
 
 ## Convert video input into lower resolution
 
@@ -193,7 +195,7 @@ done
 
 ## Find unfinished jobs
 python data/soccernet_dense_anchors/check_unfinished_inference.py \
---inference_root /mnt/storage/gait-0/xin/soccernet_features > inference_matches_todo.txt
+--inference_root /mnt/storage/gait-0/xin/soccernet_features_3_game_start_offset/ > inference_matches_todo.txt
 
 ## Rerun unfinished jobs 5fps
 
@@ -239,3 +241,8 @@ Errors:
 Runtime:
 
     /mnt/storage/gait-0/xin//logs/spain_laliga.2015-2016.2015-09-12_-_17-00_Espanyol_0_-_6_Real_Madrid.1_LQ/workerlog.0
+
+
+
+nano /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps//england_epl.2016-2017.2016-11-06_-_19-30_Leicester_1_-_2_West_Brom.1_LQ.mkv
+override time to 3780 secs

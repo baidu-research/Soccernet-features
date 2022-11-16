@@ -94,6 +94,7 @@ def compute_nms():
             # import ipdb; ipdb.set_trace()
 
             if not os.path.exists(features_filename):
+                print('missing feature', features_filename)
                 continue
 
             features = np.load(features_filename, allow_pickle = True)
@@ -135,7 +136,7 @@ def compute_nms():
 
             probability_array = np.zeros((int(cls_score.shape[0] / original_fps) * target_fps, cls_score.shape[1])) - 1
 
-            print(probability_array.shape)
+            # print(probability_array.shape)
             # last one is background?
 
             for time_step in range(cls_score.shape[0]):
@@ -144,6 +145,11 @@ def compute_nms():
                     index_in_target = int(time_step * target_fps / original_fps)
                     probability_array[index_in_target][category] = max(
                         cls_score[time_step, category], probability_array[index_in_target][category])
+
+            features_array_filename = os.path.join(result_folder, f'{half}_features_array.npy')
+            with open(features_array_filename, 'wb') as f:
+                np.save(features_array_filename, backbone_features)
+                # print('wrote', features_array_filename)
 
             # print(probability_array[:50,])
 
@@ -187,7 +193,7 @@ def compute_nms():
         with open(result_filename, 'w') as f:
             json.dump(detection_results_json, f)
 
-# compute_nms()
+compute_nms()
 
 results =  evaluate(SoccerNet_path=soccernet_path, 
                 Predictions_path=result_jsons_root,
