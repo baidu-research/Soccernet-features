@@ -2,11 +2,38 @@
 
 # Preface
 
-This repo contains code to finetune backbone models on the Soccernet dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. In 2021 and 2022, the winning solutions for the Soccernet Challenge localization track used finetuned features generated this way. In the next section, links to the previous best features are attached. This repo is made public so that further progress on feature pretraining can be made or inference could be done on data other than Soccernet (If you do either of these things, do not forget to give a reference to this work). Once better features are generated, this repo will be updated.
+This repo contains code to run feature inference and finetune backbone models on the Soccernet dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. In 2021 and 2022, the winning solutions for the Soccernet Challenge localization track used finetuned features generated this way. In the next section, links to the previous best features are attached. This repo is made public so that further progress on feature pretraining can be made or inference could be done on data other than Soccernet (If you do either of these things, do not forget to give a reference to this work). Once better features are generated, this repo will be updated.
 
 ## Best Pretrained Soccernet Features from 2021
 
-This other [repo](https://github.com/baidu-research/vidpress-sports) contains the pretrained Soccernet features winning the CVPR 2021 ActivityNet Challange, Temporal Localization track, SoccerNet Challenge for 2021 and 2022. The features were extracted from an ensemble of 5 models. Those are the best features known for Soccernet so far. 
+This other [repo](https://github.com/baidu-research/vidpress-sports) contains the pretrained Soccernet features winning the CVPR 2021 ActivityNet Challange, Temporal Localization track, SoccerNet Challenge for 2021 and 2022. The features were extracted from an ensemble of 5 models. Those are the best features known for Soccernet so far.
+
+# Feature inference
+
+This pipeline can be used for extracting features for Soccernet videos or other broadcast soccer videos in general.
+
+Install cuda、cudnn、nccl first. Clone this repo.
+
+    pip3 install paddlepaddle-gpu --upgrade
+
+    pip3 install --upgrade -r requirements.txt
+
+A config file for the video file in the follow format needs to be constructed and its filename set as VIDEO_CONFIG. It needs to have the path to the video file, fps of the video and the total length in seconds.
+
+    {
+        "filename": "/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_5fps/england_epl.2014-2015.2015-02-21_-_18-00_Chelsea_1_-_1_Burnley.1_LQ.mkv",
+        "fps": 5,
+        "length_secs": 3196
+    }
+
+Download weight file and set the filename to be WEIGHT_FILE.
+
+Set enviroment variables LOG_DIR to save logs. The test config do not need to be changed. Set INFERENCE_DIR. This is where the features.npy containing the weights will be saved.
+
+    python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=$LOG_DIR  main.py  \
+    --test -c data/soccernet_inference/soccernet_pptimesformer_k400_one_file_inference.yaml \
+    -w $WEIGHT_FILE -o inference_dir=$INFERENCE_DIR \
+    -o DATASET.test.file_path=$VIDEO_CONFIG
 
 # Train your own model
 
@@ -14,7 +41,13 @@ This other [repo](https://github.com/baidu-research/vidpress-sports) contains th
 
 In this section, we will be extracting short 10 seconds clips from the Soccernet videos and the clips will have a lower resolution for training.
 
-Download raw HQ video data from the [Soccernet official website](https://www.soccer-net.org/download). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder. (There are 3 resolutions, 1080p, 720p, 224p. The 720p, 224p videos are all cut from gamestart to end whistle.)
+Download raw HQ video data from the [Soccernet official website](https://www.soccer-net.org/download). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder.
+
+Notes:
+
+- Three resolutions of videos are provided 1080p, 720p, 224p. The caveat here is that the scripts assumes 1080p is used. The key difference is that compared to the 720p, 224p videos, which are trippmed from the gamestart to the end of the game. Therefore, a lot of the offsets in the scripts need to be removed.
+
+- The code as is only lowers the resolution for training clips. Potential resource saving (decoding time and memory) can be achieved using even lower fps. Decoding speed is the bottleneck in training. Lower fps sacrifices data diversity a little bit. This tradeoff was not investigated but is worth considering if resource constrained.
 
 Run the following command. The output is commands to extract the clips. Redirect the output into a file because there are many extraction commands and you will need to split the file to run the commands in parallel. Choose a folder and set the environment variable $CLIPS_FOLDER to save your clips.
 
@@ -151,7 +184,7 @@ Run the parallel jobs on a cluster, slurm based for example.
 
     mkdir $INFERENCE_DIR
 
-    python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG 
+    python3.7 -B -m paddle.distributed.launch --gpus="0" --log_dir=log_videoswin_test  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG
 
 
 ## Run all inference 5fps
@@ -163,7 +196,7 @@ INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dens
 INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
 
 for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*;
-do 
+do
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
@@ -181,8 +214,8 @@ CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_list
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
 INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
 
-for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
-do 
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*;
+do
 line=`basename "$FILE" .mkv`
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
@@ -204,8 +237,8 @@ INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dens
 INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
 
 
-cat inference_matches_todo.txt | while read line 
-do 
+cat inference_matches_todo.txt | while read line
+do
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
@@ -223,8 +256,8 @@ INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dens
 INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
 
 
-cat inference_matches_todo.txt | while read line 
-do 
+cat inference_matches_todo.txt | while read line
+do
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
@@ -243,6 +276,7 @@ Runtime:
     /mnt/storage/gait-0/xin//logs/spain_laliga.2015-2016.2015-09-12_-_17-00_Espanyol_0_-_6_Real_Madrid.1_LQ/workerlog.0
 
 
+Note:
 
 nano /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps//england_epl.2016-2017.2016-11-06_-_19-30_Leicester_1_-_2_West_Brom.1_LQ.mkv
 override time to 3780 secs
