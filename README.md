@@ -192,19 +192,24 @@ Run the parallel jobs on a cluster, slurm based for example.
 Needed to sample down to 5fps because of our scale to run all Soccernet data
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
-INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_balanced/ppTimeSformer_dense_event_lr_100_fc_lr_100_balanced_epoch_00004.pdparams
 
-for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*;
-do
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_4_ppTimeSformer
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_5_ppTimeSformer_balanced
+
+
+for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+do 
+line=`basename "$FILE" .mkv`
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
-
+echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
 echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
 --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
 --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
-done
+done > unfinished_inference.sh
 
 ## Check inference logs
 
@@ -228,7 +233,7 @@ done
 
 ## Find unfinished jobs
 python data/soccernet_dense_anchors/check_unfinished_inference.py \
---inference_root /mnt/storage/gait-0/xin/soccernet_features_3_game_start_offset/ > inference_matches_todo.txt
+--inference_root /mnt/storage/gait-0/xin/soccernet_features_4_ppTimeSformer/ > inference_matches_todo.txt
 
 ## Rerun unfinished jobs 5fps
 

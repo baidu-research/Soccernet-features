@@ -136,7 +136,6 @@ class CenterCrop(object):
         results['imgs'] = ccrop_imgs
         return results
 
-
 @PIPELINES.register()
 class MultiScaleCrop(object):
     def __init__(

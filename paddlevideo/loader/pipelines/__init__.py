@@ -18,7 +18,7 @@ from .augmentations import (CenterCrop, ColorJitter, GroupRandomFlip,
                             Normalization, PackOutput, RandomCrop, RandomFlip,
                             RandomResizedCrop, Scale, TenCrop, ToArray,
                             UniformCrop, RandomGamma, MultiCenterCrop,
-                            RandomBrightness, RandomHue, RandomSaturation)
+                            RandomBrightness, RandomHue, RandomSaturation, LeftCrop, RightCrop)
 from .augmentations_ava import *
 from .compose import Compose
 from .decode import FeatureDecoder, FrameDecoder, VideoDecoder, ActionFeatureDecoder, OneVideoDecoder
@@ -52,5 +52,5 @@ __all__ = [
     'RandomGamma', 'MultiCenterCrop', 'RandomBrightness', 'RandomHue',
     'RandomSaturation', 'UniformSampleFrames', 'PoseDecode', 'PoseCompact',
     'Resize', 'RandomResizedCrop_V2', 'Flip_V2', 'GeneratePoseTarget',
-    'FormatShape', 'Collect', 'OneVideoDecoder'
+    'FormatShape', 'Collect', 'OneVideoDecoder', 'LeftCrop', 'RightCrop'
 ]

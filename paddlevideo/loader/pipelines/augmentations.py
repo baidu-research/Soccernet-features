@@ -299,6 +299,120 @@ class CenterCrop(object):
 
 
 @PIPELINES.register()
+class LeftCrop(object):
+    """
+    Left crop images.
+    Args:
+        target_size(int): Left crop a square with the target_size from an image.
+        do_round(bool): Whether to round up the coordinates of the upper left corner of the cropping area. default: True
+    """
+    def __init__(self, target_size, do_round=True, backend='pillow'):
+        self.target_size = target_size
+        self.do_round = do_round
+        self.backend = backend
+
+    def __call__(self, results):
+        """
+        Performs Left crop operations.
+        Args:
+            imgs: List where each item is a PIL.Image.
+            For example, [PIL.Image0, PIL.Image1, PIL.Image2, ...]
+        return:
+            ccrop_imgs: List where each item is a PIL.Image after Center crop.
+        """
+        imgs = results['imgs']
+        ccrop_imgs = []
+        th, tw = self.target_size, self.target_size
+        if isinstance(imgs, paddle.Tensor):
+            h, w = imgs.shape[-2:]
+            x1 =0
+            if h>=th:
+                y1 = int(round((h - th) / 2.0)) if self.do_round else (h - th) // 2
+            else:
+                y1=0
+            ccrop_imgs = imgs[:, :, y1:y1 + th, x1:x1 + tw]
+        else:
+            for img in imgs:
+                if self.backend == 'pillow':
+                    w, h = img.size
+                elif self.backend == 'cv2':
+                    h, w, _ = img.shape
+                else:
+                    raise NotImplementedError
+                assert (w >= self.target_size) and (h >= self.target_size), \
+                    "image width({}) and height({}) should be larger than crop size".format(
+                        w, h, self.target_size)
+                x1 = 0
+                y1 = int(round(
+                    (h - th) / 2.0)) if self.do_round else (h - th) // 2
+                if self.backend == 'cv2':
+                    ccrop_imgs.append(img[y1:y1 + th, x1:x1 + tw])
+                elif self.backend == 'pillow':
+                    ccrop_imgs.append(img.crop((x1, y1, x1 + tw, y1 + th)))
+        results['imgs'] = ccrop_imgs
+        return results
+
+
+@PIPELINES.register()
+class RightCrop(object):
+    """
+    Left crop images.
+    Args:
+        target_size(int): Right crop a square with the target_size from an image.
+        do_round(bool): Whether to round up the coordinates of the upper left corner of the cropping area. default: True
+    """
+    def __init__(self, target_size, do_round=True, backend='pillow'):
+        self.target_size = target_size
+        self.do_round = do_round
+        self.backend = backend
+
+    def __call__(self, results):
+        """
+        Performs Center crop operations.
+        Args:
+            imgs: List where each item is a PIL.Image.
+            For example, [PIL.Image0, PIL.Image1, PIL.Image2, ...]
+        return:
+            ccrop_imgs: List where each item is a PIL.Image after Center crop.
+        """
+        imgs = results['imgs']
+        ccrop_imgs = []
+        th, tw = self.target_size, self.target_size
+        if isinstance(imgs, paddle.Tensor):
+            h, w = imgs.shape[-2:]
+            if w>=tw:
+                x1 =w-tw
+            else:
+                x1=0
+
+            if h>=th:
+                y1 = int(round((h - th) / 2.0)) if self.do_round else (h - th) // 2
+            else:
+                y1=0
+            ccrop_imgs = imgs[:, :, y1:y1 + th, x1:x1 + tw]
+        else:
+            for img in imgs:
+                if self.backend == 'pillow':
+                    w, h = img.size
+                elif self.backend == 'cv2':
+                    h, w, _ = img.shape
+                else:
+                    raise NotImplementedError
+                assert (w >= self.target_size) and (h >= self.target_size), \
+                    "image width({}) and height({}) should be larger than crop size".format(
+                        w, h, self.target_size)
+                x1 = w-tw
+                y1 = int(round(
+                    (h - th) / 2.0)) if self.do_round else (h - th) // 2
+                if self.backend == 'cv2':
+                    ccrop_imgs.append(img[y1:y1 + th, x1:x1 + tw])
+                elif self.backend == 'pillow':
+                    ccrop_imgs.append(img.crop((x1, y1, x1 + tw, y1 + th)))
+        results['imgs'] = ccrop_imgs
+        return results
+
+
+@PIPELINES.register()
 class MultiScaleCrop(object):
     """
     Random crop images in with multiscale sizes

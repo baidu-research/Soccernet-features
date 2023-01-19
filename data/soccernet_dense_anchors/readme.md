@@ -489,19 +489,196 @@ echo "sbatch -p 1080Ti --gres=gpu:1 --cpus-per-task 4 -n 1  \
 done > unfinished_inference.sh
 
 
-starting from 9707087
+## try 3 crop to see if I can increase performance
+
+### center crop
+    CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_center_crop
+
+    for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+    do 
+    line=`basename "$FILE" .mkv`
+    INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+    echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
+    echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+    --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+    --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+    done > unfinished_inference_center_crop.sh
+
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_center_crop  > inference_matches_todo.txt
+#### Rerun unfinished
+
+        CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+        INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_center_crop
+
+        cat inference_matches_todo.txt | while read line
+        do
+        INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+        INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+        echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+        --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+        --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+        done > unfinished_inference_center_crop.sh
+
+#### Test features
+
+    python data/soccernet_dense_anchors/evaluate_dense_anchors.py \
+    --features_root /mnt/storage/gait-0/xin/soccernet_features_6_center_crop \
+    --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ \
+    --crop center
+
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.0001.log
+
+##### 2 crops
+
+
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_2crops --features features_array.npy --features_list features_array.npy,features_array_left.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a 2crops.0.0001.log
+
+### left crop
+
+    CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
+
+    for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+    do 
+    line=`basename "$FILE" .mkv`
+    INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+    echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
+    echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+    --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_left_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+    --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+    done > unfinished_inference_left_crop.sh
+
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_left_crop  > inference_matches_todo.txt
+
+### check all inference dir    
+    CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
+
+    for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+    do 
+    line=`basename "$FILE" .mkv`
+    INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+    echo $INFERENCE_DIR
+    done > inference_dirs_left_crop.txt
+
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_right_crop \
+    --inference_dirs_file inference_dirs_left_crop.txt > inference_matches_todo.txt
+
+#### Rerun unfinished
+
+        CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+        INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
+
+        cat inference_matches_todo.txt | while read line
+        do
+        INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+        INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+        echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+        --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_left_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+        --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+        done > unfinished_inference_left_crop.sh
+
+#### Test features
+
+        python data/soccernet_dense_anchors/evaluate_dense_anchors.py \
+        --features_root /mnt/storage/gait-0/xin/soccernet_features_6_left_crop \
+        --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ \
+        --crop left
+### right crop
+
+    CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_right_crop
+
+    for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+    do 
+    line=`basename "$FILE" .mkv`
+    INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+    echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
+    echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+    --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_right_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+    --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+    done > unfinished_inference_right_crop.sh
+
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_right_crop  > inference_matches_todo.txt
+
+### check all inference dir    
+    CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_right_crop
+
+    for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+    do 
+    line=`basename "$FILE" .mkv`
+    INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+    echo $INFERENCE_DIR
+    done > inference_dirs_right_crop.txt
+
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_right_crop \
+    --inference_dirs_file inference_dirs_right_crop.txt > inference_matches_todo.txt
+
+#### Rerun unfinished
+
+        CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+        INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_right_crop
+
+        cat inference_matches_todo.txt | while read line
+        do
+        INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+        INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+        echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+        --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_right_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
+        --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
+        done > unfinished_inference_right_crop.sh
+
+        bash unfinished_inference_right_crop.sh
+
+#### Test features
+
+        python data/soccernet_dense_anchors/evaluate_dense_anchors.py \
+        --features_root /mnt/storage/gait-0/xin/soccernet_features_6_right_crop \
+        --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ \
+        --crop right
+
 
 ## Check inference logs
 
 CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
 INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100/ppTimeSformer_dense_event_lr_100_epoch_00028.pdparams
 INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features
+INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
 
 for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
 do 
 line=`basename "$FILE" .mkv`
 INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
 INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
 
 log_file=/mnt/storage/gait-0/xin//logs/$line.log
 echo $log_file
@@ -634,9 +811,9 @@ maybe we need to add data to test one file
 
 try initial model
 
-
-python data/soccernet_dense_anchors/check_unfinished_inference.py \
---inference_root /mnt/storage/gait-0/xin/soccernet_features_2_0_threads
+# Check unfinished
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_2_0_threads
 
 
 
@@ -672,3 +849,124 @@ inference has to be done on low quality
 
 
 /mnt/storage/gait-0/xin/soccernet_features_3_game_start_offset/england_epl.2014-2015.2015-02-21_-_18-00_Chelsea_1_-_1_Burnley.1_LQ
+
+
+
+features_root = '/mnt/storage/gait-0/xin/soccernet_features_4_ppTimeSformer/'
+
+
+Average mAP:  0.09007290453289639
+Average mAP per class:  [0.2720474159093795, 0.12153369206782262, 0.036611412793572766, 0.24408286481055408, 0.014652519534988516, 0.0, 0.0, 0.2240384262459937, 0.0, 0.2785389094882098, 0.03884592489740687, 0.0, 0.0, 0.30088821131131077, 0.0, 0.0, 0.0]
+Average mAP visible:  0.10438751417635218
+Average mAP visible per class:  [0.3458375844630926, 0.20291783482882622, 0.03915415905982397, 0.29339214977841765, 0.016429031990266036, 0.0, 0.0, 0.2509649531984421, 0.0, 0.2803347900642102, 0.03894049868445526, 0.0, 0.0, 0.30661673893045305, 0.0, 0.0, 0.0]
+Average mAP unshown:  0.07134054404467563
+Average mAP unshown per class:  [0.0, 0.10666052510019895, 0.0, 0.07151678962836137, 0.00629467122281144, 0.0, 0.0, 0.2027338799026472, 0.0, 0.23936296047231195, 0.034630049890725816, 0.0, 0.0, 0.2662281963637266, 0.0, 0.0, 0.0]
+
+
+ffmpeg -i "/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/00.worldcup1.mp4" -vf "scale=554x256,fps=5" -map 0:v -c:v libx264 "/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/00.worldcup1.5fps.mp4" -y
+ffmpeg -i "/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/01.Spain-Goal5-closeup.mp4" -vf "scale=564x256,fps=5" -map 0:v -c:v libx264 "/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/01.Spain-Goal5-closeup.5fps.mp4" -y
+ffmpeg -i "/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/02.Spain-Goal5-broadcast_view.mp4" -vf "scale=564x256,fps=5" -map 0:v -c:v libx264 "/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/02.Spain-Goal5-broadcast_view.5fps.mp4" -y
+
+mkdir /mnt/storage/gait-0/xin//logs/00.worldcup1
+python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/00.worldcup1.log  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_one_file_inference.yaml -w output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams -o inference_dir=/mnt/storage/gait-0/xin//logs/00.worldcup1 -o DATASET.test.file_path=/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/00.worldcup1.json
+
+/mnt/storage/gait-0/xin//logs/00.worldcup1/features.npy
+
+
+python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/01.Spain-Goal5-closeup.log  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_one_file_inference.yaml -w output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams -o inference_dir=/mnt/storage/gait-0/xin//logs/01.Spain-Goal5-closeup -o DATASET.test.file_path=/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/01.Spain-Goal5-closeup.json
+
+
+/mnt/storage/gait-0/xin//logs/02.Spain-Goal5-broadcast_view/features.npy
+python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/02.Spain-Goal5-broadcast_view.log  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_one_file_inference.yaml -w output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams -o inference_dir=/mnt/storage/gait-0/xin//logs/02.Spain-Goal5-broadcast_view -o DATASET.test.file_path=/mnt/storage/gait-0/xin/dev/PaddleVideo/logs/02.Spain-Goal5-broadcast_view.json
+
+
+2022-11-23 23:31:52,943 [MainThread  ] [INFO ]  Best Performance at end of training 
+2022-11-23 23:31:52,943 [MainThread  ] [INFO ]  a_mAP visibility all: 0.576915737029858
+2022-11-23 23:31:52,943 [MainThread  ] [INFO ]  a_mAP visibility all per class: [0.7338447762386684, 0.5816676236687317, 0.7785980815311692, 0.6822690267005584, 0.3760402573240339, 0.4928297533487119, 0.5222437585527825, 0.6015392146933541, 0.8139629113582744, 0.772587339787498, 0.7518053192678322, 0.4991151557316356, 0.6624030206023768, 0.8673679774094701, 0.603418822670661, 0.02756402346331268, 0.04031046715851462]
+2022-11-23 23:31:52,943 [MainThread  ] [INFO ]  a_mAP visibility visible: 0.6361439291972443
+2022-11-23 23:31:52,944 [MainThread  ] [INFO ]  a_mAP visibility visible per class: [0.760193110495957, 0.7747634876492324, 0.7888214837989929, 0.7617382796254766, 0.4016478554140963, 0.49547309120115374, 0.5239630298264336, 0.732484378839268, 0.816210900339387, 0.8079184815799014, 0.756169468497864, 0.5120977396697852, 0.7214378152654716, 0.8719719240855749, 0.6394084783316006, 0.24309512085154883, 0.207052150881406]
+2022-11-23 23:31:52,944 [MainThread  ] [INFO ]  a_mAP visibility unshown: 0.3638725516259772
+2022-11-23 23:31:52,944 [MainThread  ] [INFO ]  a_mAP visibility unshown per class: [0.0, 0.47558556016408116, 0.0, 0.26110491964466687, 0.19200377423112605, 0.030872993255438394, 0.01619923815464124, 0.45325791842697494, 0.7517355800425992, 0.6646306699993666, 0.3864525770855391, 0.4798547913349795, 0.048492404412619275, 0.8306191083040396, 0.13953363608163166, 0.0, 0.0]
+2022-11-23 23:31:52,946 [MainThread  ] [INFO ]  Checking/Download features and labels locally
+
+
+
+sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1 --wrap "python -u -B -m paddle.distributed.launch --gpus=0,1,2,3,4,5,6,7 --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_balanced main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_balanced.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" --output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_balanced.log"
+
+
+sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale_adamW_balanced main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale_adamW_balanced.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.00001_sgd_60_random_scale_adamW_balanced.log"
+
+
+
+sbatch -p V100_GAIT --nodelist=asimov-227 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale_adamW_balanced main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale_adamW_balanced.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.0001_sgd_60_random_scale_adamW_balanced.log"
+
+
+sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_adamW_balanced main.py --validate -c data/soccernet/experiments/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_adamW_balanced.yaml -w pretrained_weights/ppTimeSformer_k400_16f_distill.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_videoswin_k400_dense_lr_0.001_sgd_60_random_scale_adamW_balanced.log"
+
+python data/soccernet_dense_anchors/evaluate_dense_anchors.py
+
+balanced actually worse:
+
+2022-12-02 02:46:49,910 [MainThread  ] [INFO ]  Best Performance at end of training 
+2022-12-02 02:46:49,911 [MainThread  ] [INFO ]  a_mAP visibility all: 0.45982091034791645
+2022-12-02 02:46:49,911 [MainThread  ] [INFO ]  a_mAP visibility all per class: [0.5189455663377526, 0.4116411575609777, 0.5880927903728196, 0.609399005210963, 0.23152746232902469, 0.36884666421184314, 0.4122902373058888, 0.5064612133815835, 0.7122760259870689, 0.6418326668276235, 0.6302575242796522, 0.38493336861830596, 0.5283362989581609, 0.7939564760897224, 0.39278392028149234, 0.06413417531586627, 0.0212409228458336]
+2022-12-02 02:46:49,912 [MainThread  ] [INFO ]  a_mAP visibility visible: 0.5281647370617496
+2022-12-02 02:46:49,912 [MainThread  ] [INFO ]  a_mAP visibility visible per class: [0.6341910900817699, 0.5398507082992499, 0.6045171382405693, 0.6902625720741247, 0.2553067332372326, 0.36991745516849556, 0.4156381988614815, 0.6616281828231739, 0.7142213324984563, 0.6728101192987885, 0.6348331943757354, 0.36737920082029474, 0.605935964119121, 0.8045367456042793, 0.42615260019488616, 0.4608747667195578, 0.12074452763252676]
+2022-12-02 02:46:49,912 [MainThread  ] [INFO ]  a_mAP visibility unshown: 0.2909832648010812
+2022-12-02 02:46:49,912 [MainThread  ] [INFO ]  a_mAP visibility unshown per class: [0.0, 0.3599121128738172, 0.0, 0.20664835959393435, 0.07352151339243154, 0.03678496191865176, 0.023163776044697947, 0.3417160855078865, 0.664361284648191, 0.5586421840208868, 0.31106841531289964, 0.406840057575185, 0.02064045190171563, 0.7009065438446038, 0.0785766957791549, 0.0, 0.0]
+2022-12-02 02:46:49,914 [MainThread  ] [INFO ]  Checking/Download features and labels locally
+  0%|                                                                                              
+
+
+
+sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100.yaml -w pretrained_weights/TimeSformer_divST_32x32_224_HowTo100M.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_HowTo100M_pretrained.log"
+
+lr 0.0025 did not work
+
+
+sbatch -p V100_GAIT --nodelist=asimov-227 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01 main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01.yaml -w pretrained_weights/TimeSformer_divST_32x32_224_HowTo100M.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01.log"
+
+
+sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.0001.yaml main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.0001.yaml -w pretrained_weights/TimeSformer_divST_32x32_224_HowTo100M.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.0001.log"
+
+
+sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.005.yaml main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.005.yaml -w pretrained_weights/TimeSformer_divST_32x32_224_HowTo100M.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.005.log"
+
+
+
+sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_10_howto100M_lr_0.0025.yaml main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_10_howto100M_lr_0.0025.yaml -w pretrained_weights/TimeSformer_divST_32x32_224_HowTo100M.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_10_howto100M_lr_0.0025"
+
+
+
+
+sbatch -p V100_GAIT --nodelist=asimov-230 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_10_k600_lr_0.0025.yaml main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_10_k600_lr_0.0025.yaml -w pretrained_weights/pretrained_weights/TimeSformer_divST_8x32_224_K600.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_10_k600_lr_0.0025"
+
+
+data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01_sgd.yaml
+
+
+sbatch -p V100_GAIT --nodelist=asimov-228 --account=gait -t 30-00:00:00 --gres=gpu:8 --cpus-per-task 40 -n 1  \
+--wrap "python -u -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logs/data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01_sgd.yaml main.py --validate -c data/soccernet/experiments/pptimesformer/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01_sgd.yaml -w pretrained_weights/TimeSformer_divST_32x32_224_HowTo100M.pdparams" \
+--output="/mnt/storage/gait-0/xin//logs/soccernet_pptimesformer_k400_videos_dense_event_lr_100_fc_lr_multiplier_100_howto100M_lr_0.01_sgd.log"
+
+
+sgd was not the issue
+
