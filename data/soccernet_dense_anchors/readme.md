@@ -535,10 +535,23 @@ done > unfinished_inference.sh
 
     python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.0001.log
 
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.001.log
+
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.01.log
+
+
 ##### 2 crops
 
 
-    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_2crops --features features_array.npy --features_list features_array.npy,features_array_left.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a 2crops.0.0001.log
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_2crops --features features_array.npy --features_list features_array.npy,features_array_left.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a 2crops.0.01.log
+
+    maybe the lr is too small 
+
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_3_crops --features features_array.npy --features_list features_array.npy,features_array_left.npy,features_array_right.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a 3crops.0.01.log
+
+    comparison with Le's features
+    python -u src/main.py --SoccerNet_path=/mnt/scratch/kangle/datasets/SoccerNetv2_features/ --model_name=tpn --features TPN_1fps.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a 3crops.tpn.0.01.log
+
 
 ### left crop
 

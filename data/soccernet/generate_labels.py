@@ -162,6 +162,7 @@ def main(args):
             
             game_time_secs_index = event_time_game_half_video // args.clip_length
             for json_index in [-1, game_time_secs_index - 1, game_time_secs_index, game_time_secs_index + 1]:
+                # when is json_index -1?
                 if json_index not in json_files[game_half_index]:
                     continue
                 candidate_json = json_files[game_half_index][json_index]
