@@ -161,20 +161,39 @@ PIPELINE: #PIPELINE field TODO.....
 #         max_epoch: 30
 #     weight_decay: 0.05
 
-# tsn optimizer
+# # tsn optimizer
+# OPTIMIZER: #OPTIMIZER field
+#     name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'
+#     momentum: 0.9
+#     learning_rate: #Mandatory, the type of learning rate scheduler, associate to the 'paddlevideo/solver/'
+#         name: 'PiecewiseDecay'
+#         boundaries: [60]
+#         values: [0.001, 0.0001]  #4 cards * 32 batch size
+#     weight_decay:
+#         name: 'L2'
+#         value: 0.0001
+#     # grad_clip:
+#     #     name: 'ClipGradByGlobalNorm'
+#     #     value: 40.0
+
+# pptimesformer optimizer
 OPTIMIZER: #OPTIMIZER field
-    name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'
+    name: 'Momentum'
     momentum: 0.9
-    learning_rate: #Mandatory, the type of learning rate scheduler, associate to the 'paddlevideo/solver/'
-        name: 'PiecewiseDecay'
-        boundaries: [60]
-        values: [0.001, 0.0001]  #4 cards * 32 batch size
+    learning_rate:
+        iter_step: True
+        name: 'CustomWarmupCosineDecay'
+        max_epoch: 60
+        warmup_epochs: 2
+        warmup_start_lr: 0.0001
+        cosine_base_lr: 0.001
     weight_decay:
         name: 'L2'
-        value: 0.0001
-    # grad_clip:
-    #     name: 'ClipGradByGlobalNorm'
-    #     value: 40.0
+        value: 0.00007
+    use_nesterov: True
+    grad_clip:
+        name: 'ClipGradByGlobalNorm'
+        value: 40.0
 
 METRIC:
     name: 'CenterCropMetric'

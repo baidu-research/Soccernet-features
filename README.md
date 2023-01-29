@@ -64,6 +64,8 @@ This is a sample to split into 400 equal parts:
         sed -n ${i}~400p data/soccernet/generate_training_short_clips.sh > data/soccernet/short_clips_parallel/${i}.sh;
     done
 
+Manchester_United_1_-_1_Liverpool.1_HQ
+
 The commands may get stuck on a few videos and render the jobs stuck, so here is another split into 401 parts to run after the above job.
 
     for i in {0..400};
@@ -87,7 +89,7 @@ Sample code to run them on a slurm based cluster:
 
     for i in {0..399};
     do
-    sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+    sbatch -p 1080Ti,2080Ti  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
     "echo no | bash data/soccernet/short_clips_parallel/${i}.sh" \
     --output="data/soccernet/short_clips_parallel/${i}.log"
     done
@@ -96,7 +98,7 @@ For the seconds split,
 
     for i in {0..400};
     do
-    sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+    sbatch -p 1080Ti,2080Ti,M40x8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
     "echo no | bash data/soccernet/short_clips_parallel_401/${i}.sh" \
     --output="data/soccernet/short_clips_parallel_401/${i}.log"
     done

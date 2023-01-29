@@ -22,7 +22,7 @@ def main(args):
     # sample filename /mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/spain_laliga/2016-2017/2016-08-20 - 19-15 Barcelona 6 - 2 Betis/1_HQ.mkv
     files = sorted(glob.glob(os.path.join(args.input_folder, '**/*_HQ.mkv'), recursive= True))
     if not os.path.isdir(args.clips_folder):
-        os.mkdir(args.output_folder)
+        os.mkdir(args.clips_folder)
 
     # import ipdb;ipdb.set_trace()
 
@@ -37,13 +37,8 @@ def main(args):
         while start < duration:
             if start + args.clip_length > duration:
                 break
-            if start == 0:
-                effective_start = 0
-                # 80 s
-            else:
-                effective_start = start - 10
 
-            start_time_str = str(datetime.timedelta(seconds=effective_start))
+            start_time_str = str(datetime.timedelta(seconds=start))
 
             start_time_str_filename = start_time_str.replace(':','-')
             new_filename = os.path.join(args.clips_folder, new_shortname_root).replace('.mkv', f'.{start_time_str_filename}.{start}.{args.clip_length}.{args.extension}')

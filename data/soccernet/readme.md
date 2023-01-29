@@ -12,6 +12,9 @@ This takes a long time, so the script prints out the commands and you can split 
 
 python data/soccernet/generate_training_short_clips.py --clips_folder=/mnt/storage/gait-0/xin/dataset/soccernet_456x256 > data/soccernet/generate_training_short_clips.sh
 
+cat data/soccernet/generate_training_short_clips.sh | grep 'england_epl/2014-2015/2015-02-21 - 18-00 Chelsea 1 - 1 Burnley/' > data/soccernet/generate_training_short_clips_one_sample.sh
+
+
 <!-- sed -n '0~5p' oldfile > newfile -->
 
 mkdir data/soccernet/short_clips_parallel
@@ -20,6 +23,8 @@ for i in {0..399};
 do
 sed -n ${i}~400p data/soccernet/generate_training_short_clips.sh > data/soccernet/short_clips_parallel/${i}.sh;
 done
+
+mkdir data/soccernet/short_clips_parallel_401
 
 for i in {0..400};
 do
@@ -78,6 +83,9 @@ ffmpeg -ss 0:33:10 -i "/mnt/big/multimodal_sports/SoccerNet_HQ/raw_data/england_
 
 /mnt/storage/gait-0/xin/dataset/soccernet_456x256/england_epl.2016-2017.2017-01-15_-_19-00_Manchester_United_1_-_1_Liverpool.1_HQ.0-31-40.1910.10.mkv
 
+cat data/soccernet/generate_training_short_clips.sh | grep "/mnt/storage/gait-0/xin/dataset/soccernet_456x256/england_epl.2016-2017.2017-01-15_-_19-00_Manchester_United_1_-_1_Liverpool.1_HQ" > data/soccernet/england_epl.2016-2017.2017-01-15_-_19-00_Manchester_United_1_-_1_Liverpool.1_HQ.sh
+
+mkdir data/soccernet/england_epl.2016-2017.2017-01-15_-_19-00_Manchester_United_1_-_1_Liverpool.1_HQ_parallel/
 
 for i in {0..19};
 do
@@ -86,7 +94,7 @@ done
 
 for i in {0..19};
 do
-sbatch -p 1080Ti,2080Ti,TitanXx8  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
+sbatch -p 1080Ti,2080Ti  --gres=gpu:1 --cpus-per-task 4 -n 1 --wrap \
 "bash data/soccernet/england_epl.2016-2017.2017-01-15_-_19-00_Manchester_United_1_-_1_Liverpool.1_HQ_parallel/${i}.sh" \
 --output="data/soccernet/england_epl.2016-2017.2017-01-15_-_19-00_Manchester_United_1_-_1_Liverpool.1_HQ_parallel/${i}.log"
 done

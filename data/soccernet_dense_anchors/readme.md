@@ -491,10 +491,54 @@ done > unfinished_inference.sh
 
 ## try 3 crop to see if I can increase performance
 
+# Previous experiments
+    Epoch 13 results in 
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_center_crop
+
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00019.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_7_center_crop_epoch_19
+
+    all backed up here
+    output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_copy howto100M lr after epoch 7 
+
+    K400 weights actually better, aiming for 0.55 val loss
+
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00006.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_06
+
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00009.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_09
+
+
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00011.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11
+
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/ --model_name=soccernet_features_8_k400_center_crop_epoch_11_features_0.001 --features features_array_center.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a soccernet_features_8_k400_center_crop_epoch_11_features.0.001.log
+
+    2023-01-28 17:03:17,453 [MainThread  ] [INFO ]  Best Performance at end of training 
+    2023-01-28 17:03:17,454 [MainThread  ] [INFO ]  a_mAP visibility all: 0.6753279681811477
+    2023-01-28 17:03:17,454 [MainThread  ] [INFO ]  a_mAP visibility all per class: [0.7834556880624673, 0.6675470516008929, 0.8187705451938794, 0.7500495800436109, 0.5318768080519187, 0.5671287847942668, 0.604250733602596, 0.7031250671622562, 0.8558761463639335, 0.8484167150382492, 0.7999165151654004, 0.612247252938991, 0.7137271128703698, 0.8815532408306246, 0.7176012790445598, 0.2716422886133795, 0.35339064970211437]
+    2023-01-28 17:03:17,454 [MainThread  ] [INFO ]  a_mAP visibility visible: 0.7499252071303669
+    2023-01-28 17:03:17,454 [MainThread  ] [INFO ]  a_mAP visibility visible per class: [0.8092423029223085, 0.8381739042287077, 0.8283339933139043, 0.8216650366196875, 0.5570453806829606, 0.5689708059882317, 0.6060527086758933, 0.8187807191454817, 0.8575271698369731, 0.8750945294464637, 0.8044977604190938, 0.6533629252888237, 0.790119855001465, 0.8830583652262348, 0.7606998403178952, 0.7471986707543012, 0.5289045533478115]
+    2023-01-28 17:03:17,454 [MainThread  ] [INFO ]  a_mAP visibility unshown: 0.4268965468413768
+    2023-01-28 17:03:17,454 [MainThread  ] [INFO ]  a_mAP visibility unshown per class: [0.0, 0.5773971565963318, 0.0, 0.3333911789792041, 0.3304835662761508, 0.07692307692307691, 0.005585197572228607, 0.5691341629869545, 0.8031237832132346, 0.762687222117237, 0.4373191943119306, 0.559199669294273, 0.07831943355043575, 0.8681173773890851, 0.1479740897277568, 0.0, 0.0]
+    2023-01-28 17:03:17,456 [MainThread  ] [INFO ]  Checking/Download features and labels locally
+
+    SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/
+
+
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00012.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_12
+
+
+
+
+
 ### center crop
     CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
-    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_center_crop
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00016.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16
 
     for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
     do 
@@ -503,43 +547,67 @@ done > unfinished_inference.sh
     INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
     echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
-    echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+    echo "sbatch -p V100x8,V100x8_mlong,V100_DGX,P100,1080Ti,1080Ti_slong,M40x8,2080Ti,2080Ti_mlong --exclude asimov-135,asimov-157,asimov-136,asimov-209,asimov-217,asimov-121,asimov-124 --gres=gpu:1 --cpus-per-task 4 -n 1  \
     --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
     --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
     done > unfinished_inference_center_crop.sh
 
     python data/soccernet_dense_anchors/check_unfinished_inference.py \
-    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_center_crop  > inference_matches_todo.txt
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_7_center_crop_epoch_19  > inference_matches_todo.txt
+
+### check unfinished
+    CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00011.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16
+
+    for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
+    do 
+    line=`basename "$FILE" .mkv`
+    INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
+    INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
+
+    echo $INFERENCE_DIR
+    done > inference_dirs_center_crop.txt
+
+    python data/soccernet_dense_anchors/check_unfinished_inference.py \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16 \
+    --inference_dirs_file inference_dirs_center_crop.txt > inference_matches_todo.txt
+
+
 #### Rerun unfinished
 
         CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
-        INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_center_crop
+        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00016.pdparams
+        INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16
 
         cat inference_matches_todo.txt | while read line
         do
         INFERENCE_JSON_CONFIG=$CONFIG_DIR/$line.mkv
         INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
-        echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+        echo "sbatch -p V100x8_mlong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
         --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
         --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
-        done > unfinished_inference_center_crop.sh
+        done > unfinished_inference_rerun_center_crop.sh
+
+    
 
 #### Test features
 
     python data/soccernet_dense_anchors/evaluate_dense_anchors.py \
-    --features_root /mnt/storage/gait-0/xin/soccernet_features_6_center_crop \
-    --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ \
+    --features_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11 \
+    --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/ \
     --crop center
+
+    rsync -avz --include='*/' --include="*.json" --exclude="*" /mnt/storage/gait-0/xin/soccernet_features_6_center_crop /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/
 
     python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.0001.log
 
-    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.001.log
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop_3 --features features_array_center.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.001.log
 
-    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop --features features_array.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.01.log
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop_2 --features features_array_center.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.01.2.log
 
-
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/ --model_name=soccernet_features_8_k400_center_crop_epoch_11_features_0.001 --features features_array_center.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a soccernet_features_8_k400_center_crop_epoch_11_features.0.001.log
 ##### 2 crops
 
 
@@ -556,7 +624,7 @@ done > unfinished_inference.sh
 ### left crop
 
     CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
     INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
 
     for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
@@ -566,7 +634,7 @@ done > unfinished_inference.sh
     INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
     echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
-    echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+    echo "sbatch -p 1080Ti,1080Ti_slong,V100x8,V100_DGX,P100,M40x8,2080Ti,2080Ti_mlong --exclude asimov-135,asimov-157,asimov-136,asimov-209,asimov-217 --gres=gpu:1 --cpus-per-task 4 -n 1  \
     --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_left_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
     --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
     done > unfinished_inference_left_crop.sh
@@ -576,7 +644,7 @@ done > unfinished_inference.sh
 
 ### check all inference dir    
     CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
     INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
 
     for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
@@ -589,13 +657,13 @@ done > unfinished_inference.sh
     done > inference_dirs_left_crop.txt
 
     python data/soccernet_dense_anchors/check_unfinished_inference.py \
-    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_right_crop \
+    --inference_root /mnt/storage/gait-0/xin/soccernet_features_6_left_crop \
     --inference_dirs_file inference_dirs_left_crop.txt > inference_matches_todo.txt
 
 #### Rerun unfinished
 
         CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
         INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_left_crop
 
         cat inference_matches_todo.txt | while read line
@@ -606,7 +674,7 @@ done > unfinished_inference.sh
         echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
         --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_left_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
         --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
-        done > unfinished_inference_left_crop.sh
+        done > unfinished_inference_rerun_left_crop.sh
 
 #### Test features
 
@@ -617,7 +685,7 @@ done > unfinished_inference.sh
 ### right crop
 
     CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
     INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_right_crop
 
     for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
@@ -627,7 +695,7 @@ done > unfinished_inference.sh
     INFERENCE_DIR=$INFERENCE_DIR_ROOT/$line
 
     echo "rm /mnt/storage/gait-0/xin//logs/$line.log"
-    echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
+    echo "sbatch -p 1080Ti,1080Ti_slong,V100x8,V100_DGX,P100,M40x8,2080Ti,2080Ti_mlong --exclude asimov-135,asimov-157,asimov-136,asimov-209,asimov-217 --gres=gpu:1 --cpus-per-task 4 -n 1  \
     --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_right_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
     --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
     done > unfinished_inference_right_crop.sh
@@ -637,7 +705,7 @@ done > unfinished_inference.sh
 
 ### check all inference dir    
     CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
     INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_right_crop
 
     for FILE in /mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/*; 
@@ -656,7 +724,7 @@ done > unfinished_inference.sh
 #### Rerun unfinished
 
         CONFIG_DIR=/mnt/storage/gait-0/xin/dataset/soccernet_456x256_inference_json_lists_5fps/
-        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100/ppTimeSformer_dense_event_lr_100_fc_lr_100_epoch_00038.pdparams
+        INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00013.pdparams
         INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_6_right_crop
 
         cat inference_matches_todo.txt | while read line
@@ -667,9 +735,9 @@ done > unfinished_inference.sh
         echo "sbatch -p 1080Ti,1080Ti_slong --exclude asimov-157 --gres=gpu:1 --cpus-per-task 4 -n 1  \
         --wrap \"python3.7 -B -m paddle.distributed.launch --gpus='0' --log_dir=/mnt/storage/gait-0/xin//logs/$line  main.py  --test -c data/soccernet_inference/soccernet_pptimesformer_k400_videos_dense_event_lr_50_one_file_inference_right_crop.yaml -w $INFERENCE_WEIGHT_FILE -o inference_dir=$INFERENCE_DIR -o DATASET.test.file_path=$INFERENCE_JSON_CONFIG\" \
         --output=\"/mnt/storage/gait-0/xin//logs/$line.log\" "
-        done > unfinished_inference_right_crop.sh
+        done > unfinished_inference_rerun_right_crop.sh
 
-        bash unfinished_inference_right_crop.sh
+        bash unfinished_inference_rerun_right_crop.sh
 
 #### Test features
 

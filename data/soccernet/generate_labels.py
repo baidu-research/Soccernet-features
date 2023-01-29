@@ -100,15 +100,10 @@ def main(args):
                 if start + args.clip_length > duration:
                     break
 
-                if start < game_start_secs_in_videos[game_half_index]:
+                if start + args.clip_length < game_start_secs_in_videos[video_index]:
                     continue
 
-                if start == 0:
-                    effective_start = 0
-                else:
-                    effective_start = start - 10
-
-                start_time_str = str(datetime.timedelta(seconds=effective_start))
+                start_time_str = str(datetime.timedelta(seconds=start))
                 start_time_str_filename = start_time_str.replace(':','-')
                 # new_filename = os.path.join(args.clips_folder, new_shortname_root).replace('.mkv', '.{}.{}.mp4'.format(start,args.clip_length))
 
