@@ -2,11 +2,7 @@
 
 # Preface
 
-This repo contains code to run feature inference and finetune backbone models on the Soccernet dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. In 2021 and 2022, the winning solutions for the Soccernet Challenge localization track used finetuned features generated this way. In the next section, links to the previous best features are attached. This repo is made public so that further progress on feature pretraining can be made or inference could be done on data other than Soccernet (If you do either of these things, do not forget to give a reference to this work). Once better features are generated, this repo will be updated.
-
-## Best Pretrained Soccernet Features from 2021
-
-This other [repo](https://github.com/baidu-research/vidpress-sports) contains the pretrained Soccernet features winning the CVPR 2021 ActivityNet Challange, Temporal Localization track, SoccerNet Challenge for 2021 and 2022. The features were extracted from an ensemble of 5 models. Those are the best features known for Soccernet so far.
+This repo contains code to run feature inference and finetune backbone models on the Soccernet dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. The winning solutions for the CVPR 2021 and 2022 ActivityNet Challange, Temporal Localization track, used features from here [repo](https://github.com/baidu-research/vidpress-sports). This repo makes a single model based on TimeSFormer fully opensource with pretrained weights available to run inference or train on any video. 
 
 # Feature inference
 
