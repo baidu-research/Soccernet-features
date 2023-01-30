@@ -532,7 +532,36 @@ done > unfinished_inference.sh
     INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_12
 
 
+    INFERENCE_WEIGHT_FILE=output/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01/ppTimeSformer_dense_event_lr_100_fc_lr_100_howto100M_lr_0.01_epoch_00016.pdparams
+    INFERENCE_DIR_ROOT=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16
 
+#### lr 0.001
+
+        python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16_features/ --model_name=soccernet_features_8_k400_center_crop_epoch_16_features_0.001 --features features_array_center.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a soccernet_features_8_k400_center_crop_epoch_16_features.0.001.log
+
+        2023-01-29 16:23:03,444 [MainThread  ] [INFO ]  Best Performance at end of training 
+        2023-01-29 16:23:03,445 [MainThread  ] [INFO ]  a_mAP visibility all: 0.6832925949805769
+        2023-01-29 16:23:03,445 [MainThread  ] [INFO ]  a_mAP visibility all per class: [0.8036531576605761, 0.6776837643017822, 0.8246294011947528, 0.7579067367291639, 0.5721210272615269, 0.5725935969786271, 0.6291117709580355, 0.7226312497381732, 0.8577140907784867, 0.8557275281442572, 0.8113534450661858, 0.6138453324207923, 0.735914550099516, 0.884825845255535, 0.7169197088796871, 0.18142541663839645, 0.3979174925643127]
+        2023-01-29 16:23:03,446 [MainThread  ] [INFO ]  a_mAP visibility visible: 0.749494860991442
+        2023-01-29 16:23:03,446 [MainThread  ] [INFO ]  a_mAP visibility visible per class: [0.8117532423780649, 0.8540545448733236, 0.8315916640565448, 0.8232430528064975, 0.5950028382245994, 0.5735847934926686, 0.6301567208513618, 0.8320209934427231, 0.859209082348446, 0.8786270930758805, 0.8154773713106382, 0.648916119685039, 0.7954563875581895, 0.8864329756562662, 0.7538774116943234, 0.624403132632152, 0.527605212767797]
+        2023-01-29 16:23:03,446 [MainThread  ] [INFO ]  a_mAP visibility unshown: 0.44380313051710796
+        2023-01-29 16:23:03,446 [MainThread  ] [INFO ]  a_mAP visibility unshown per class: [0.0, 0.5857252904621801, 0.0, 0.3525352627088541, 0.34131727923083993, 0.14285714285714285, 0.01401803715160749, 0.6004551615197393, 0.8007304678023934, 0.7739048896806441, 0.4577693451539529, 0.5658705521282953, 0.12246756455479772, 0.8705270456452903, 0.1412626578266671, 0.0, 0.0]
+        2023-01-29 16:23:03,447 [MainThread  ] [INFO ]  Checking/Download features and labels locally
+
+
+#### lr 0.0001
+
+        python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16_features/ --model_name=soccernet_features_8_k400_center_crop_epoch_16_features_0.0001 --features features_array_center.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a soccernet_features_8_k400_center_crop_epoch_16_features.0.0001.log
+
+
+        2023-01-29 17:31:31,444 [MainThread  ] [INFO ]  Best Performance at end of training 
+        2023-01-29 17:31:31,444 [MainThread  ] [INFO ]  a_mAP visibility all: 0.695263465366132
+        2023-01-29 17:31:31,445 [MainThread  ] [INFO ]  a_mAP visibility all per class: [0.8032622630350832, 0.7009291095580338, 0.8148468926935654, 0.7640651158399597, 0.565942577217494, 0.5816554798206857, 0.6303795654798763, 0.720665134829507, 0.8574742539568743, 0.8579947000108964, 0.8097411298223648, 0.6128338358939784, 0.7453851312805307, 0.8898154777573384, 0.7217898675466169, 0.36010201366709654, 0.3825963628143425]
+        2023-01-29 17:31:31,445 [MainThread  ] [INFO ]  a_mAP visibility visible: 0.7570782619969617
+        2023-01-29 17:31:31,445 [MainThread  ] [INFO ]  a_mAP visibility visible per class: [0.8067754586247783, 0.8776727923903096, 0.821130844339655, 0.8272463808385101, 0.5902812947963989, 0.5828515026062153, 0.6318532098235099, 0.8295817800400672, 0.8591325292581419, 0.882823640742846, 0.8136476615444932, 0.6475406760845908, 0.8043788751127909, 0.8923916600787238, 0.7628632378274389, 0.7289742121941598, 0.5111846976457203]
+        2023-01-29 17:31:31,445 [MainThread  ] [INFO ]  a_mAP visibility unshown: 0.4417942008998541
+        2023-01-29 17:31:31,445 [MainThread  ] [INFO ]  a_mAP visibility unshown per class: [0.0, 0.6102908260046699, 0.0, 0.3768002216968261, 0.3505633300081366, 0.09999999999999998, 0.012540525801135316, 0.5832476413401845, 0.7978124396372691, 0.7728703499052209, 0.4504455367941888, 0.5661441855456726, 0.11289494275666238, 0.8720926556557086, 0.13762195655242826, 0.0, 0.0]
+        2023-01-29 17:31:31,447 [MainThread  ] [INFO ]  Checking/Download features and labels locally
 
 
 ### center crop
@@ -595,8 +624,8 @@ done > unfinished_inference.sh
 #### Test features
 
     python data/soccernet_dense_anchors/evaluate_dense_anchors.py \
-    --features_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11 \
-    --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/ \
+    --features_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16 \
+    --result_jsons_root /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16_features/ \
     --crop center
 
     rsync -avz --include='*/' --include="*.json" --exclude="*" /mnt/storage/gait-0/xin/soccernet_features_6_center_crop /mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/
@@ -607,7 +636,7 @@ done > unfinished_inference.sh
 
     python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_3crops_result_jsons/ --model_name=pptimesformer_center_crop_2 --features features_array_center.npy --framerate 1 --LR 0.01 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a center_crop.0.01.2.log
 
-    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_11_features/ --model_name=soccernet_features_8_k400_center_crop_epoch_11_features_0.001 --features features_array_center.npy --framerate 1 --LR 0.001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a soccernet_features_8_k400_center_crop_epoch_11_features.0.001.log
+    python -u src/main.py --SoccerNet_path=/mnt/storage/gait-0/xin/soccernet_features_8_k400_center_crop_epoch_16_features/ --model_name=soccernet_features_8_k400_center_crop_epoch_16_features_0.0001 --features features_array_center.npy --framerate 1 --LR 0.0001 --head_mode fc --window_size 7 --NMS_window 15 2>&1 | tee -a soccernet_features_8_k400_center_crop_epoch_16_features.0.0001.log
 ##### 2 crops
 
 
