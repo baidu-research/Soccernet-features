@@ -2,7 +2,7 @@
 
 # Preface
 
-This repo contains code to run feature inference and finetune backbone models on the Soccernet dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. The winning solutions for the CVPR 2021 and 2022 ActivityNet Challange, Temporal Localization track, used features from this [Soccernet Baidu Features repo](https://github.com/baidu-research/vidpress-sports). This repo makes a single model based on TimeSFormer fully opensource with pretrained weights available to run inference or train on any video. 
+This repo contains code to run feature inference and finetune backbone models on the [Soccernet](https://www.soccer-net.org/home) dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. The winning solutions for the CVPR 2021 and 2022 ActivityNet Challange, Temporal Localization track, used features from this [Soccernet Baidu Features repo](https://github.com/baidu-research/vidpress-sports). This repo makes a single model based on TimeSFormer fully opensource with pretrained weights available to run inference or train on any video. 
 
 # Feature inference
 
@@ -40,7 +40,7 @@ Set enviroment variables LOG_DIR to save logs. The test config do not need to be
 
 In this section, we will be extracting short 10 seconds clips from the Soccernet videos and the clips will have a lower resolution for training.
 
-Download raw HQ video data from the [Soccernet official website](https://www.soccer-net.org/download). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder.
+Download raw HQ video data from the [Soccernet official website]([https://www.soccer-net.org/download](https://www.soccer-net.org/home)). Put it in a folder and set $RAW_VIDEOS_ROOT to that folder.
 
 Notes:
 
