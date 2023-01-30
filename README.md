@@ -26,7 +26,7 @@ A config file for the video file in the follow format needs to be constructed an
         "length_secs": 3196
     }
 
-Download weight file and set the filename to be WEIGHT_FILE.
+Download weight file and set the filename to be WEIGHT_FILE. [OneDrive](https://1drv.ms/u/s!AruitsssaVf8edpJuWH1a1KCLCc?e=xkgpdn) [Baidu Pan](https://pan.baidu.com/s/10b5pdwwxNXezWg6-_z3YwA?pwd=segt).
 
 Set enviroment variables LOG_DIR to save logs. The test config do not need to be changed. Set INFERENCE_DIR. This is where the features.npy containing the weights will be saved.
 
