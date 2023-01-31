@@ -34,6 +34,8 @@ Set enviroment variables LOG_DIR to save logs. The test config do not need to be
     -w $WEIGHT_FILE -o inference_dir=$INFERENCE_DIR \
     -o DATASET.test.file_path=$VIDEO_CONFIG
 
+Inference on a 45 min video at 5fps takes approximately 2-3 hours.
+
 # Train your own model
 
 ## Generate low resolution clips
