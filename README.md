@@ -133,7 +133,8 @@ Then you will have train.list, val.list, test.list in this folder.
 
 ## Training log link
 
-    TODO
+The feature extractor training log is here. The folder also contains the trained NetVLAD++ action detection result (final mAP by category).
+Soccernet-features/data/soccernet/archived_logs/
 
 # Inference on whole video files
 
