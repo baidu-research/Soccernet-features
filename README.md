@@ -4,6 +4,78 @@
 
 This repo contains code to run feature inference and finetune backbone models on the [Soccernet](https://www.soccer-net.org/home) dataset. The Soccernet features are used in down-stream tasks, in particular event spotting and replay grounding. The winning solutions for the CVPR 2021 and 2022 ActivityNet Challange, Temporal Localization track, used features from this [Soccernet Baidu Features repo](https://github.com/baidu-research/vidpress-sports). This repo makes a single model based on TimeSFormer fully opensource with pretrained weights available to run inference or train on any video. 
 
+# Understanding the result features
+
+Load the features in as follows:
+
+    import numpy as np
+    a = np.load('features.py')
+
+The whole numpy array could look like this:
+
+    array({'cls_score_all': array([[[-1.1469777,  1.2446018,  1.7308334, ..., -3.7974577,
+             -3.9211693,  9.876837 ]],
+
+       [[-1.1502348,  1.2446928,  1.7270398, ..., -3.7986917,
+         -3.922049 ,  9.873158 ]],
+
+       [[-1.1553113,  1.2458539,  1.7238224, ..., -3.8000093,
+         -3.9231768,  9.866276 ]],
+
+       ...,
+
+       [[-1.1867781,  1.2394937,  1.7207626, ..., -3.7993345,
+         -3.9266846,  9.682111 ]],
+
+       [[-1.1717311,  1.3373474,  1.7501842, ..., -3.809371 ,
+         -3.9297879,  9.226656 ]],
+
+       [[-1.0841012,  1.4193138,  1.7844383, ..., -3.8307285,
+         -3.9134252,  8.695862 ]]], dtype=float32), 'event_times': array([[[0.61532754, 0.48600802, 0.384552  , ..., 0.4478651 ,
+         0.63936603, 1.        ]],
+
+       [[0.595665  , 0.4832232 , 0.37086746, ..., 0.45608336,
+         0.63960594, 1.        ]],
+
+       [[0.57046086, 0.48085424, 0.35832942, ..., 0.46679202,
+         0.63987064, 1.        ]],
+
+       ...,
+
+       [[0.5881998 , 0.47877887, 0.51381993, ..., 0.42987552,
+         0.64069575, 1.        ]],
+
+       [[0.52614266, 0.48890987, 0.49975097, ..., 0.43349805,
+         0.63012475, 1.        ]],
+
+       [[0.61633825, 0.48636538, 0.46834537, ..., 0.5310676 ,
+         0.6127171 , 1.        ]]], dtype=float32), 'features': array([[[-0.0132505 ,  0.02137352, -0.21291943, ..., -0.07798928,
+          0.21858051, -0.23259796]],
+
+       [[-0.01204887,  0.02450565, -0.21337315, ..., -0.07861489,
+          0.21864586, -0.23138241]],
+
+       [[-0.01019135,  0.02715371, -0.21588442, ..., -0.07936225,
+          0.2186201 , -0.22969423]],
+
+       ...,
+
+       [[ 0.01318725, -0.02435086, -0.12325487, ..., -0.00325756,
+          0.21175556, -0.11824775]],
+
+       [[-0.00307255, -0.02015326, -0.10546789, ...,  0.02826597,
+          0.18887816, -0.095611  ]],
+
+       [[-0.01093192, -0.06524777, -0.15625732, ...,  0.0292125 ,
+          0.17296971, -0.11872528]]], dtype=float32)}, dtype=object)
+
+Extract the useful features (other ones were left unimplemented):
+
+    data_dict = a.item() 
+    features = data_dict['features']
+
+features.shape = (3489, 1, 768). The old soccernet features have a shape of (number of frames, 8576) being an ensemble of models. In the new feature, the feature dimension is reduced to just 768, 3489 is the number of frames. One still need to train a stage 2 model to use these features (I do not have access to the one I verified the features with any more. Let me know if someone trained one and wants to share. )
+
 # Feature inference
 
 This pipeline can be used for extracting features for Soccernet videos or other broadcast soccer videos in general.
